@@ -3,7 +3,7 @@
 const Module = require("node:module");
 
 const originalLoad = Module._load;
-Module._load = function (request, _parent, _isMain) {
+Module._load = function (request) {
   if (request === "server-only") return {};
   return originalLoad.apply(this, arguments);
 };

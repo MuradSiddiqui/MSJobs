@@ -6,7 +6,7 @@ import { JobCard } from "@/components/jobs/job-card";
 import { JobFilters } from "@/components/jobs/filter-panel";
 import { companyName, asArray } from "@/lib/relations";
 import { ensureScoresForJobs } from "@/server/ensure-matches";
-import { sourceLabel } from "@/lib/utils";
+import { sourceLabel, isoDaysAgo } from "@/lib/utils";
 
 type Search = {
   q?: string;
@@ -64,7 +64,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   if (sp.seniority) query = query.eq("seniority", sp.seniority);
   if (sp.posted) {
     const days = Number(sp.posted);
-    const since = new Date(Date.now() - days * 86400000).toISOString();
+    const since = isoDaysAgo(days);
     query = query.gte("effective_posted_at", since);
   }
 

@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Wall-clock helper for server queries — keep out of React render bodies for purity lint. */
+export function isoDaysAgo(days: number, nowMs: number = Date.now()): string {
+  return new Date(nowMs - days * 86_400_000).toISOString();
+}
+
 export function relativeTime(date: Date | string): string {
   const then = typeof date === "string" ? new Date(date) : date;
   const seconds = Math.round((then.getTime() - Date.now()) / 1000);

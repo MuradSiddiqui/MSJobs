@@ -5,13 +5,14 @@ import { PageHeader } from "@/components/shared/states";
 import { Card } from "@/components/ui/card";
 import { JobCard } from "@/components/jobs/job-card";
 import { companyName, asArray } from "@/lib/relations";
+import { isoDaysAgo } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims?.sub as string;
 
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const since = isoDaysAgo(1);
   const [
     { count: newJobs },
     { count: strong },

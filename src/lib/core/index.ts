@@ -9,4 +9,3 @@ export * from "./matching/scorer";
 export * from "./matching/semantic";
 export * from "./matching/gate";
 export * from "./dedupe";
-export * from "./schemas/ai";

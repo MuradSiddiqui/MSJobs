@@ -20,6 +20,23 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": [
         "error",
         {
+          paths: [
+            {
+              name: "ai",
+              message:
+                "src/lib/core is a pure domain layer. Do not import I/O libraries.",
+            },
+            {
+              name: "unpdf",
+              message:
+                "src/lib/core is a pure domain layer. Do not import I/O libraries.",
+            },
+            {
+              name: "mammoth",
+              message:
+                "src/lib/core is a pure domain layer. Do not import I/O libraries.",
+            },
+          ],
           patterns: [
             {
               group: ["next", "next/*", "react", "react-dom", "react/*"],
@@ -32,7 +49,7 @@ const eslintConfig = defineConfig([
                 "src/lib/core is a pure domain layer. Do not import Supabase.",
             },
             {
-              group: ["ai", "@ai-sdk/*", "unpdf", "mammoth"],
+              group: ["@ai-sdk", "@ai-sdk/*"],
               message:
                 "src/lib/core is a pure domain layer. Do not import I/O libraries.",
             },

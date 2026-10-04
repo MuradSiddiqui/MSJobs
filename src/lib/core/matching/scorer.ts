@@ -135,7 +135,7 @@ export async function scoreJob(
   };
 
   const active = Object.entries(weights) as [keyof ScoreBreakdown, number][];
-  const totalWeight = active.reduce((sum, [key, weight]) => {
+  const totalWeight = active.reduce((sum, [, weight]) => {
     if (weight <= 0) return sum;
     return sum + weight;
   }, 0);
