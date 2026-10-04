@@ -1,0 +1,212 @@
+import type { Route } from "next";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { PageHeader, EmptyState } from "@/components/shared/states";
+import { JobCard } from "@/components/jobs/job-card";
+import { JobFilters } from "@/components/jobs/filter-panel";
+import { companyName, asArray } from "@/lib/relations";
+import { ensureScoresForJobs } from "@/server/ensure-matches";
+import { sourceLabel } from "@/lib/utils";
+
+type Search = {
+  q?: string;
+  type?: string;
+  lang?: string;
+  match?: string;
+  posted?: string;
+  remote?: string;
+  city?: string;
+  state?: string;
+  seniority?: string;
+  sort?: string;
+  cursor?: string;
+};
+
+const PAGE_SIZE = 20;
+
+function encodeCursor(postedAt: string, id: string) {
+  return Buffer.from(`${postedAt}|${id}`, "utf8").toString("base64url");
+}
+
+function decodeCursor(raw: string): { postedAt: string; id: string } | null {
+  try {
+    const [postedAt, id] = Buffer.from(raw, "base64url").toString("utf8").split("|");
+    if (!postedAt || !id) return null;
+    return { postedAt, id };
+  } catch {
+    return null;
+  }
+}
+
+export default async function JobsPage({ searchParams }: { searchParams: Promise<Search> }) {
+  const sp = await searchParams;
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub as string;
+
+  const { data: ignored } = await supabase.from("ignored_jobs").select("job_id").eq("user_id", userId);
+  const ignoredIds = setOf((ignored ?? []).map((r) => r.job_id));
+
+  let query = supabase
+    .from("jobs")
+    .select(
+      "id, title, city, remote_type, employment_category, effective_posted_at, first_seen_at, posted_at_is_estimated, required_skills, posting_language, companies(name), job_source_postings(source), user_job_matches!left(overall_score, label, user_id)",
+    )
+    .eq("is_active", true)
+    .limit(PAGE_SIZE + 1);
+
+  if (sp.q) query = query.or(`title.ilike.%${sp.q}%,city.ilike.%${sp.q}%`);
+  if (sp.type) query = query.eq("employment_category", sp.type);
+  if (sp.lang === "en" || sp.lang === "de") query = query.eq("posting_language", sp.lang);
+  if (sp.remote) query = query.eq("remote_type", sp.remote);
+  if (sp.city) query = query.ilike("city", `%${sp.city}%`);
+  if (sp.state) query = query.eq("state_code", sp.state);
+  if (sp.seniority) query = query.eq("seniority", sp.seniority);
+  if (sp.posted) {
+    const days = Number(sp.posted);
+    const since = new Date(Date.now() - days * 86400000).toISOString();
+    query = query.gte("effective_posted_at", since);
+  }
+
+  const sort = sp.sort ?? "newest";
+  if (sort === "company") query = query.order("title").order("id");
+  else if (sort === "discovered") {
+    query = query.order("first_seen_at", { ascending: false }).order("id", { ascending: false });
+  } else {
+    query = query
+      .order("effective_posted_at", { ascending: false })
+      .order("id", { ascending: false });
+  }
+
+  const cursor = sp.cursor ? decodeCursor(sp.cursor) : null;
+  if (cursor && sort !== "match" && sort !== "best" && sort !== "company") {
+    const column = sort === "discovered" ? "first_seen_at" : "effective_posted_at";
+    query = query.or(
+      `${column}.lt.${cursor.postedAt},and(${column}.eq.${cursor.postedAt},id.lt.${cursor.id})`,
+    );
+  }
+
+  const { data, error } = await query;
+  let rows = (data ?? []).filter((job) => !ignoredIds.has(job.id));
+
+  // Score any jobs on this page that are missing a match for the current user.
+  await ensureScoresForJobs(
+    userId,
+    rows.map((j) => j.id),
+  );
+
+  // Re-read match rows after scoring so the UI shows fresh percentages.
+  const pageIds = rows.map((j) => j.id);
+  if (pageIds.length > 0) {
+    const { data: matches } = await supabase
+      .from("user_job_matches")
+      .select("job_id, overall_score, label, user_id")
+      .eq("user_id", userId)
+      .in("job_id", pageIds);
+    const byJob = new Map((matches ?? []).map((m) => [m.job_id, m]));
+    rows = rows.map((job) => ({
+      ...job,
+      user_job_matches: byJob.has(job.id) ? [byJob.get(job.id)!] : [],
+    }));
+  }
+
+  if (sp.match) {
+    const min = Number(sp.match);
+    rows = rows.filter((job) => {
+      const match = asArray(job.user_job_matches).find((m) => m.user_id === userId);
+      return (match?.overall_score ?? 0) >= min;
+    });
+  }
+
+  if (sort === "match" || sort === "best") {
+    rows = [...rows].sort((a, b) => {
+      const sa =
+        asArray(a.user_job_matches).find((m) => m.user_id === userId)?.overall_score ?? 0;
+      const sb =
+        asArray(b.user_job_matches).find((m) => m.user_id === userId)?.overall_score ?? 0;
+      return sb - sa;
+    });
+  }
+
+  const hasMore = rows.length > PAGE_SIZE;
+  const page = hasMore ? rows.slice(0, PAGE_SIZE) : rows;
+  const last = page[page.length - 1];
+  const nextCursor =
+    hasMore && last
+      ? encodeCursor(
+          (sort === "discovered" ? last.first_seen_at : last.effective_posted_at) ??
+            last.first_seen_at,
+          last.id,
+        )
+      : null;
+
+  const nextHref = (() => {
+    if (!nextCursor) return null;
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(sp)) {
+      if (key === "cursor" || value == null || value === "") continue;
+      params.set(key, value);
+    }
+    params.set("cursor", nextCursor);
+    return `/jobs?${params.toString()}`;
+  })();
+
+  const activeFilters = [sp.type, sp.lang, sp.match, sp.posted, sp.remote, sp.q].filter(Boolean).length;
+
+  return (
+    <div>
+      <PageHeader
+        title="Jobs"
+        description="German tech roles scored against your CV — filter by type, freshness, and match."
+      />
+      <JobFilters />
+      {error ? <p className="mt-2 text-sm text-danger">{error.message}</p> : null}
+      {page.length === 0 ? (
+        <EmptyState
+          title="No jobs match these filters"
+          description={
+            activeFilters > 0
+              ? "Clear filters (All types · All scores · Any time) — your board has more roles than this narrow view."
+              : "Run npm run ingest or npm run ingest:watch to pull fresh postings."
+          }
+        />
+      ) : (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {page.map((job) => {
+            const match = asArray(job.user_job_matches).find((m) => m.user_id === userId);
+            const sources = asArray(job.job_source_postings);
+            return (
+              <JobCard
+                key={job.id}
+                id={job.id}
+                title={job.title}
+                company={companyName(job.companies)}
+                city={job.city}
+                remoteType={job.remote_type}
+                category={job.employment_category}
+                postedAt={job.effective_posted_at ?? job.first_seen_at}
+                estimated={job.posted_at_is_estimated}
+                skills={job.required_skills ?? []}
+                score={match?.overall_score}
+                label={match?.label}
+                source={sources[0]?.source ? sourceLabel(sources[0].source) : null}
+                postingLanguage={job.posting_language}
+              />
+            );
+          })}
+        </div>
+      )}
+      {nextHref ? (
+        <div className="mt-6">
+          <Link href={nextHref as Route} className="text-sm font-medium text-accent">
+            Load more
+          </Link>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function setOf(ids: string[]) {
+  return new Set(ids);
+}
