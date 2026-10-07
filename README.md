@@ -1,6 +1,6 @@
-# Stelle
+# MS Jobs
 
-AI-assisted discovery of **German software and AI jobs**. Stelle watches public ATS
+AI-assisted discovery of **German software and AI jobs**. MS Jobs watches public ATS
 feeds, scores postings against your CV with a transparent engine, and helps you
 prepare applications — without scraping LinkedIn or inventing experience.
 
@@ -131,5 +131,5 @@ If Personio returns bot-protection from GitHub IPs, set repository variable
 
 ## Product name
 
-Stelle is the German word for a job opening. This is an original application, not a
-clone of any existing product.
+MS Jobs follows the MS product naming convention (MS Fin, MS Dev). It is an
+original application, not a clone of any existing product.

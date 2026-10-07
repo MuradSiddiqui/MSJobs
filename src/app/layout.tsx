@@ -15,7 +15,7 @@ const display = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Stelle — German tech jobs, matched to your CV",
+  title: "MS Jobs — German tech jobs, matched to your CV",
   description: "Discover fresh German software jobs, see why they match, and track applications.",
 };
 
