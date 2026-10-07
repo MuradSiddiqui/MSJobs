@@ -13,7 +13,7 @@ export default async function OnboardingPage() {
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
       <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Onboarding</p>
-      <h1 className="mt-2 text-2xl font-semibold">Tell Stelle what to look for</h1>
+      <h1 className="mt-2 text-2xl font-semibold">Tell MS Jobs what to look for</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         You can change all of this later in Profile.
       </p>

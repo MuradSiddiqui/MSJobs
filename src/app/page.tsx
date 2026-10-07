@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, FileSearch, ShieldCheck, Sparkles, Target, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const FEATURES = [
   {
@@ -53,9 +54,10 @@ export default function HomePage() {
 
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-7">
         <Link href="/" className="font-display text-2xl font-semibold tracking-tight">
-          Stelle
+          MS Jobs
         </Link>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Button asChild variant="ghost">
             <Link href="/login">Log in</Link>
           </Button>
@@ -68,13 +70,13 @@ export default function HomePage() {
       <main className="mx-auto max-w-5xl px-6">
         <section className="pb-20 pt-10 md:pb-28 md:pt-16">
           <p className="font-display text-5xl font-semibold tracking-tight text-foreground md:text-7xl">
-            Stelle
+            MS Jobs
           </p>
           <h1 className="mt-5 max-w-2xl text-2xl font-medium leading-snug tracking-tight text-foreground/90 md:text-3xl">
             Fresh German tech jobs, scored honestly against your CV.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-            Stelle watches public career pages and ATS boards, explains every match in
+            MS Jobs watches public career pages and ATS boards, explains every match in
             plain language, and helps you prepare a strong application — without
             scraping LinkedIn or inventing experience you don&apos;t have.
           </p>
@@ -125,7 +127,7 @@ export default function HomePage() {
             Stop refreshing five career pages a day.
           </h2>
           <p className="mt-3 max-w-md text-sm text-accent-foreground/80">
-            Let Stelle watch the boards and surface the roles worth your time.
+            Let MS Jobs watch the boards and surface the roles worth your time.
           </p>
           <Button
             asChild
@@ -141,7 +143,7 @@ export default function HomePage() {
         </section>
 
         <footer className="flex flex-wrap items-center justify-between gap-2 py-10 text-xs text-muted-foreground">
-          <span>Stelle — an original application for the German software &amp; AI job market.</span>
+          <span>MS Jobs — an original application for the German software &amp; AI job market.</span>
           <span>© {new Date().getFullYear()}</span>
         </footer>
       </main>
