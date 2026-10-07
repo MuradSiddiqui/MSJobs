@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -8,31 +8,42 @@ const STORAGE_KEY = "ms-jobs-theme";
 
 type Theme = "light" | "dark";
 
-function getInitialTheme(): Theme {
-  if (typeof document === "undefined") return "light";
-  // The pre-paint script in the root layout already applied the saved or
-  // system theme to <html> before hydration, so reading the class is enough.
+function getThemeSnapshot(): Theme {
   return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+function getServerSnapshot(): Theme {
+  return "light";
+}
 
-  function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    document.documentElement.classList.toggle("dark", next === "dark");
-    window.localStorage.setItem(STORAGE_KEY, next);
-  }
+function subscribe(onChange: () => void): () => void {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+  return () => observer.disconnect();
+}
+
+function applyTheme(next: Theme): void {
+  document.documentElement.classList.toggle("dark", next === "dark");
+  window.localStorage.setItem(STORAGE_KEY, next);
+}
+
+export function ThemeToggle() {
+  // Server render and the first client render both use the server snapshot,
+  // so hydration never mismatches. After hydration the store re-reads the
+  // <html> class that the pre-paint script already set, and the icon settles
+  // with no console noise and no setState inside an effect.
+  const theme = useSyncExternalStore(subscribe, getThemeSnapshot, getServerSnapshot);
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={toggle}
+      onClick={() => applyTheme(theme === "dark" ? "light" : "dark")}
       aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      suppressHydrationWarning
     >
       {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>
