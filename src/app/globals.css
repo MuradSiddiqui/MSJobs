@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: oklch(0.975 0.008 95);
   --foreground: oklch(0.22 0.025 255);
@@ -14,12 +16,35 @@
   --danger: oklch(0.52 0.16 25);
   --radius: 0.5rem;
   --sidebar: oklch(0.968 0.01 95);
+  --surface-top: oklch(0.985 0.006 95);
   --match-excellent: oklch(0.42 0.11 155);
   --match-strong: oklch(0.45 0.09 185);
   --match-good: oklch(0.48 0.08 210);
   --match-possible: oklch(0.52 0.1 85);
   --match-weak: oklch(0.5 0.02 255);
   --surface-glow: oklch(0.72 0.06 195 / 0.18);
+}
+
+.dark {
+  --background: oklch(0.21 0.018 255);
+  --foreground: oklch(0.94 0.008 95);
+  --card: oklch(0.25 0.02 255);
+  --card-foreground: var(--foreground);
+  --muted: oklch(0.28 0.02 255);
+  --muted-foreground: oklch(0.7 0.018 255);
+  --border: oklch(0.34 0.02 255);
+  --accent: oklch(0.68 0.085 195);
+  --accent-foreground: oklch(0.18 0.02 255);
+  --ring: oklch(0.68 0.085 195);
+  --danger: oklch(0.64 0.15 25);
+  --sidebar: oklch(0.185 0.018 255);
+  --surface-top: oklch(0.235 0.02 255);
+  --match-excellent: oklch(0.62 0.11 155);
+  --match-strong: oklch(0.65 0.09 185);
+  --match-good: oklch(0.68 0.08 210);
+  --match-possible: oklch(0.7 0.1 85);
+  --match-weak: oklch(0.66 0.02 255);
+  --surface-glow: oklch(0.68 0.085 195 / 0.16);
 }
 
 @theme inline {
@@ -62,7 +87,7 @@ body {
   font-feature-settings: "ss01" on, "cv11" on;
   background-image:
     radial-gradient(ellipse 80% 50% at 50% -20%, var(--surface-glow), transparent),
-    linear-gradient(180deg, oklch(0.985 0.006 95) 0%, var(--background) 40%);
+    linear-gradient(180deg, var(--surface-top) 0%, var(--background) 40%);
   background-attachment: fixed;
 }
 

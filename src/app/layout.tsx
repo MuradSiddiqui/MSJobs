@@ -19,9 +19,15 @@ export const metadata: Metadata = {
   description: "Discover fresh German software jobs, see why they match, and track applications.",
 };
 
+// Sets the initial theme before first paint to avoid a flash of the wrong theme.
+const themeInitScript = `(function(){try{var t=localStorage.getItem('ms-jobs-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${display.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${sans.variable} ${display.variable} h-full antialiased`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body
         className="min-h-full bg-background font-sans text-foreground"
         suppressHydrationWarning

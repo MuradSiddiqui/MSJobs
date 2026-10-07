@@ -9,6 +9,7 @@ import { LayoutDashboard, Briefcase, Bookmark, Kanban, FileText, User, Settings,
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV = [
@@ -81,9 +82,12 @@ export function AppShell({
         {nav}
         <div className="mt-auto space-y-2 border-t border-border/60 pt-4">
           <p className="truncate px-2.5 text-xs text-muted-foreground">{email}</p>
-          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={signOut}>
-            Sign out
-          </Button>
+          <div className="flex items-center justify-between gap-2">
+            <Button variant="ghost" size="sm" className="justify-start" onClick={signOut}>
+              Sign out
+            </Button>
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
 
@@ -91,7 +95,9 @@ export function AppShell({
         <Link href="/dashboard" className="font-display text-lg font-semibold tracking-tight">
           MS Jobs
         </Link>
-        <Button
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Button
             variant="ghost"
             size="icon"
             onClick={() => setOpen((v) => !v)}
@@ -99,6 +105,7 @@ export function AppShell({
           >
             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
+        </div>
       </header>
       {open ? (
         <div className="border-b border-border/80 bg-sidebar/95 p-3 backdrop-blur-md md:hidden">
