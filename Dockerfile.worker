@@ -1,0 +1,29 @@
+# MS Jobs ingestion worker.
+# Runs the job-board ingestion loop 24/7 (Vercel cannot run persistent
+# processes, so this lives on Railway). The web app itself stays on Vercel.
+#
+# Required env vars (set in the Railway dashboard, never commit them):
+#   NEXT_PUBLIC_SUPABASE_URL
+#   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+#   SUPABASE_SECRET_KEY        (service role - ingestion writes bypass RLS)
+#   GROQ_API_KEY               (AI match scoring during ingestion)
+# Optional:
+#   INGEST_INTERVAL_MINUTES    (default 60; 120 recommended to save quota)
+#   INGEST_SOURCES             (comma allow-list, e.g. "greenhouse,ashby")
+
+FROM node:22-slim
+
+WORKDIR /app
+
+# Install all dependencies (tsx lives in devDependencies and is needed at runtime)
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+COPY tsconfig.json ./
+COPY scripts ./scripts
+COPY src ./src
+
+# Sensible default; override per-environment in the Railway dashboard.
+ENV INGEST_INTERVAL_MINUTES=120
+
+CMD ["npm", "run", "ingest:watch"]
