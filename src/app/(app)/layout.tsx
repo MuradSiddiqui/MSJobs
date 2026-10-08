@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/admin";
 import { AppShell } from "@/components/app-shell";
 
 export default async function AppGroupLayout({ children }: { children: ReactNode }) {
@@ -12,11 +13,13 @@ export default async function AppGroupLayout({ children }: { children: ReactNode
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("onboarding_completed_at")
+    .select("onboarding_completed_at, is_admin")
     .eq("id", userId)
     .maybeSingle();
 
-  if (!profile?.onboarding_completed_at) {
+  // Admins skip onboarding entirely; it is meant for regular users.
+  const isAdmin = isAdminEmail(email) || profile?.is_admin === true;
+  if (!isAdmin && !profile?.onboarding_completed_at) {
     redirect("/onboarding");
   }
 
