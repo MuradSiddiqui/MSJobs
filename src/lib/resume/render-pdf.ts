@@ -132,7 +132,7 @@ export async function renderResumePdf(
       margins: { top: MARGIN_Y, bottom: MARGIN_Y, left: MARGIN_X, right: MARGIN_X },
       info: {
         Title: `${resume.name ?? "CV"}`,
-        Author: resume.name ?? "Stelle",
+        Author: resume.name ?? "MS Jobs",
         Subject: meta?.jobTitle
           ? `Tailored for ${meta.jobTitle}${meta.company ? ` at ${meta.company}` : ""}`
           : "Curriculum Vitae",

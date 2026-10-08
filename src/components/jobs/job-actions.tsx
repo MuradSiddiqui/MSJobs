@@ -79,7 +79,7 @@ export function JobActions({
     <div className="space-y-3">
       <p className="max-w-xl text-xs text-muted-foreground">
         Apply opens the employer&apos;s real form (Greenhouse, Ashby, etc.) and adds this role to your
-        Applications board. Stelle cannot auto-submit third-party forms — that would be insecure and
+        Applications board. MS Jobs cannot auto-submit third-party forms — that would be insecure and
         against most ATS terms.
       </p>
       <div className="flex flex-wrap gap-2">
