@@ -21,7 +21,7 @@ export function AuthCard({
         }}
       />
       <Link href="/" className="mb-10 text-center">
-        <span className="font-display text-2xl font-semibold tracking-tight">Stelle</span>
+        <span className="font-display text-2xl font-semibold tracking-tight">MS Jobs</span>
       </Link>
       <div className="rounded-2xl border border-border/80 bg-card/95 p-6 shadow-[0_1px_2px_oklch(0.22_0.02_255/0.04)] sm:p-8">
         <h1 className="font-display text-xl font-semibold tracking-tight">{title}</h1>

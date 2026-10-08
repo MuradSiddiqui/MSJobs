@@ -142,7 +142,7 @@ function CvSuggestionsBody({
   return (
     <div className="mt-3 space-y-3">
       <p className="rounded-md border border-dashed bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-        Suggestions are diffs only until you generate a PDF. Stelle applies them into a{" "}
+        Suggestions are diffs only until you generate a PDF. MS Jobs applies them into a{" "}
         <strong>new tailored CV</strong> (your uploaded master file stays unchanged) using a classic
         2-page academic layout (centered header, section rules, date columns) similar to Google Docs
         CVs. Re-upload your CV once if contact links / technical strengths are missing from an older
