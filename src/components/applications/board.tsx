@@ -33,6 +33,12 @@ const STAGE_META: Record<string, { label: string; dot: string; pill: string }> =
   withdrawn: { label: "Withdrawn", dot: "bg-muted-foreground", pill: "bg-muted text-muted-foreground" },
 };
 
+const STAGE_FALLBACK = { label: "Applied", dot: "bg-accent", pill: "bg-accent/10 text-accent" };
+
+function stageMeta(status: string) {
+  return STAGE_META[status] ?? STAGE_FALLBACK;
+}
+
 const FUNNEL = [
   { key: "applied", label: "Applied" },
   { key: "recruiter_contact", label: "Screening" },
@@ -68,13 +74,18 @@ export function ApplicationsBoard({
   const [filter, setFilter] = useState<string>("all");
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const funnelCounts = useMemo(() => {
+  const funnel = useMemo(() => {
     const count = (keys: string[]) =>
       applications.filter((a) => keys.includes(a.status)).length;
-    return FUNNEL.map((s) => ({
+    const stages = FUNNEL.map((s) => ({
       ...s,
       n: s.key === "interview" ? count(["interview", "technical_interview"]) : count([s.key]),
     }));
+    const connectors = stages.slice(0, -1).map((s, i) => {
+      const next = stages[i + 1];
+      return convRate(s.n, next?.n ?? 0);
+    });
+    return { stages, connectors };
   }, [applications]);
 
   const upNext = useMemo(() => {
@@ -83,19 +94,19 @@ export function ApplicationsBoard({
     return applications.find((a) => a.nextAction.trim().length > 0) ?? null;
   }, [applications]);
 
-  const visible = useMemo(() => {
-    if (filter === "all") return applications;
-    if (filter === "interview")
-      return applications.filter((a) => a.status === "interview" || a.status === "technical_interview");
-    return applications.filter((a) => a.status === filter);
-  }, [applications, filter]);
+  const visible =
+    filter === "all"
+      ? applications
+      : applications.filter((a) =>
+          filter === "interview"
+            ? a.status === "interview" || a.status === "technical_interview"
+            : a.status === filter,
+        );
 
-  const conv = (i: number) => {
-    const from = funnelCounts[i]?.n ?? 0;
-    const to = funnelCounts[i + 1]?.n ?? 0;
+  function convRate(from: number, to: number) {
     if (from === 0) return "—";
     return `${Math.round((to / from) * 100)}%`;
-  };
+  }
 
   return (
     <div className="space-y-5">
@@ -105,8 +116,8 @@ export function ApplicationsBoard({
           Pipeline funnel
         </p>
         <div className="mt-4 flex items-center justify-between gap-1 sm:gap-2">
-          {funnelCounts.map((stage, i) => {
-            const meta = STAGE_META[stage.key] ?? STAGE_META.applied;
+          {funnel.stages.map((stage, i) => {
+            const meta = stageMeta(stage.key);
             return (
               <div key={stage.key} className="flex flex-1 items-center gap-1 sm:gap-2">
                 <button
@@ -121,10 +132,10 @@ export function ApplicationsBoard({
                   </span>
                   <span className="text-xs font-semibold sm:text-[13px]">{stage.label}</span>
                 </button>
-                {i < funnelCounts.length - 1 ? (
+                {i < funnel.stages.length - 1 ? (
                   <div className="flex shrink-0 flex-col items-center gap-0.5 pb-8">
                     <ArrowRight className="h-4 w-4 text-muted-foreground/60" />
-                    <span className="text-[10px] tabular-nums text-muted-foreground/70">{conv(i)}</span>
+                    <span className="text-[10px] tabular-nums text-muted-foreground/70">{funnel.connectors[i] ?? "—"}</span>
                   </div>
                 ) : null}
               </div>
@@ -149,11 +160,11 @@ export function ApplicationsBoard({
                 {upNext.title} @ {upNext.company}
               </p>
               <p className="mt-0.5 truncate text-sm text-white/65">
-                {upNext.nextAction.trim() || `Stage: ${(STAGE_META[upNext.status] ?? STAGE_META.applied).label} - keep the momentum going`}
+                {upNext.nextAction.trim() || `Stage: ${stageMeta(upNext.status).label} - keep the momentum going`}
               </p>
             </div>
             <Badge tone="accent" className="border-teal-300/30 bg-teal-300/15 text-teal-200">
-              {(STAGE_META[upNext.status] ?? STAGE_META.applied).label}
+              {stageMeta(upNext.status).label}
             </Badge>
           </div>
         </section>
@@ -186,7 +197,7 @@ export function ApplicationsBoard({
       {/* feed rows */}
       <div className="space-y-2.5">
         {visible.map((app, i) => {
-          const meta = STAGE_META[app.status] ?? STAGE_META.applied;
+          const meta = stageMeta(app.status);
           const open = expanded === app.id;
           return (
             <article
