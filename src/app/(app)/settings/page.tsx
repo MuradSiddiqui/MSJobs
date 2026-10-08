@@ -1,9 +1,10 @@
 import { PageHeader } from "@/components/shared/states";
 import { Card } from "@/components/ui/card";
+import { DeleteAccount } from "@/components/settings/delete-account";
 
 export default function SettingsPage() {
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader title="Settings" description="Runtime configuration is environment-based." />
       <Card className="space-y-2 p-4 text-sm">
         <p>
@@ -18,6 +19,7 @@ export default function SettingsPage() {
           Google OAuth can be added later in the Supabase dashboard without a schema change.
         </p>
       </Card>
+      <DeleteAccount />
     </div>
   );
 }
