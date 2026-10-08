@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Sparkles, Target, Bookmark, Send, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader } from "@/components/shared/states";
 import { Card } from "@/components/ui/card";
 import { JobCard } from "@/components/jobs/job-card";
 import { companyName, asArray } from "@/lib/relations";
@@ -85,12 +84,25 @@ export default async function DashboardPage() {
     ["Interviews", interviews ?? 0, Users],
   ] as const;
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
   return (
     <div>
-      <PageHeader title="Dashboard" description="What changed since you last looked." />
+      <div className="animate-fade-up mb-7">
+        <h1 className="font-display text-3xl font-semibold tracking-tight">{greeting}</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          What changed since you last looked - {newJobs ?? 0} new{" "}
+          {(newJobs ?? 0) === 1 ? "role" : "roles"} in the last 24 hours.
+        </p>
+      </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        {stats.map(([label, value, Icon]) => (
-          <Card key={label} className="p-4">
+        {stats.map(([label, value, Icon], i) => (
+          <Card
+            key={label}
+            className="animate-fade-up p-4 transition-all hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_10px_28px_oklch(0.22_0.02_255/0.07)]"
+            style={{ animationDelay: `${i * 70}ms` }}
+          >
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">{label}</p>
               <Icon className="h-3.5 w-3.5 shrink-0 text-accent/55" />
@@ -102,7 +114,12 @@ export default async function DashboardPage() {
         ))}
       </div>
       <section className="mt-10">
-        <h2 className="mb-4 font-display text-lg font-semibold tracking-tight">Top matches</h2>
+        <div className="mb-4 flex items-baseline justify-between">
+          <h2 className="font-display text-lg font-semibold tracking-tight">Top matches</h2>
+          <Link href="/jobs?sort=match" className="text-sm font-medium text-accent hover:underline">
+            View all
+          </Link>
+        </div>
         <div className="grid gap-3 md:grid-cols-2">
           {(top ?? []).map((row) => {
             const job = Array.isArray(row.jobs) ? row.jobs[0] : row.jobs;
