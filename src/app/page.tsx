@@ -319,8 +319,8 @@ export default function HomePage() {
               ))}
             </p>
             <blockquote className="mt-6 font-display text-2xl font-medium italic leading-snug tracking-tight md:text-[1.7rem]">
-              "I stopped refreshing five career pages a day. MS Jobs surfaces the three roles
-              actually worth my time."
+              &ldquo;I stopped refreshing five career pages a day. MS Jobs surfaces the three roles
+              actually worth my time.&rdquo;
             </blockquote>
             <p className="mt-6 text-sm font-medium text-muted-foreground">
               Murad S. - M.Sc. candidate, Frankfurt
