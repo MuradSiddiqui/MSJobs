@@ -622,6 +622,7 @@ export type Database = {
           full_name: string | null
           headline: string | null
           id: string
+          is_approved: boolean
           location: string | null
           onboarding_completed_at: string | null
           preferred_working_language: string | null
@@ -636,6 +637,7 @@ export type Database = {
           full_name?: string | null
           headline?: string | null
           id: string
+          is_approved?: boolean
           location?: string | null
           onboarding_completed_at?: string | null
           preferred_working_language?: string | null
@@ -650,6 +652,7 @@ export type Database = {
           full_name?: string | null
           headline?: string | null
           id?: string
+          is_approved?: boolean
           location?: string | null
           onboarding_completed_at?: string | null
           preferred_working_language?: string | null

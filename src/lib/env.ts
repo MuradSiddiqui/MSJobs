@@ -10,6 +10,7 @@ const serverSchema = z.object({
   AI_MODEL_STRONG: z.string().default("openai/gpt-oss-120b"),
   CRON_SECRET: z.string().optional(),
   APP_URL: z.string().url().default("http://localhost:3000"),
+  ADMIN_EMAIL: z.string().email().optional(),
   INGEST_SOURCES: z.string().optional(),
   INGEST_ARBEITNOW: z.string().optional(),
   INGEST_GREENHOUSE: z.string().optional(),

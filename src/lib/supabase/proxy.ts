@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
+import { isAdminEmail } from "@/lib/admin";
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
@@ -11,6 +12,7 @@ const PROTECTED_PREFIXES = [
   "/profile",
   "/settings",
   "/onboarding",
+  "/admin",
 ] as const;
 
 const AUTH_PAGES = ["/login", "/signup"] as const;
@@ -84,6 +86,32 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     url.pathname = "/dashboard";
     url.search = "";
     return applyCacheHeaders(NextResponse.redirect(url));
+  }
+
+  // Approval gate: new signups stay locked on /pending until the admin
+  // approves them. The admin account bypasses the check entirely.
+  if (userId) {
+    const email = typeof data?.claims?.email === "string" ? data.claims.email : null;
+    const admin = isAdminEmail(email);
+    if (!admin && matchesPrefix(path, "/admin")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      url.search = "";
+      return applyCacheHeaders(NextResponse.redirect(url));
+    }
+    if (!admin && isProtected && path !== "/pending") {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_approved")
+        .eq("id", userId)
+        .maybeSingle();
+      if (profile?.is_approved !== true) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/pending";
+        url.search = "";
+        return applyCacheHeaders(NextResponse.redirect(url));
+      }
+    }
   }
 
   return response;
