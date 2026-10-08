@@ -89,28 +89,39 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   }
 
   // Approval gate: new signups stay locked on /pending until the admin
-  // approves them. The admin account bypasses the check entirely.
+  // approves them. Admins are identified by the ADMIN_EMAIL env var or the
+  // is_admin flag on their profile; the email comes from Supabase's signed
+  // JWT so it cannot be spoofed, and auth emails are unique so nobody can
+  // register a second account with the admin's address.
   if (userId) {
     const email = typeof data?.claims?.email === "string" ? data.claims.email : null;
-    const admin = isAdminEmail(email);
+    const needsProfile = isProtected || matchesPrefix(path, "/admin");
+    let admin = isAdminEmail(email);
+    let approved = admin;
+    if (!admin && needsProfile && path !== "/pending") {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_approved, is_admin")
+        .eq("id", userId)
+        .maybeSingle();
+      if (profile?.is_admin === true) {
+        admin = true;
+        approved = true;
+      } else {
+        approved = profile?.is_approved === true;
+      }
+    }
     if (!admin && matchesPrefix(path, "/admin")) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       url.search = "";
       return applyCacheHeaders(NextResponse.redirect(url));
     }
-    if (!admin && isProtected && path !== "/pending") {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_approved")
-        .eq("id", userId)
-        .maybeSingle();
-      if (profile?.is_approved !== true) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/pending";
-        url.search = "";
-        return applyCacheHeaders(NextResponse.redirect(url));
-      }
+    if (!admin && !approved && isProtected && path !== "/pending") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/pending";
+      url.search = "";
+      return applyCacheHeaders(NextResponse.redirect(url));
     }
   }
 
