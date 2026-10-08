@@ -83,7 +83,18 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 
   if (userId && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    // Admins land straight on the admin portal, everyone else in the app.
+    const email = typeof data?.claims?.email === "string" ? data.claims.email : null;
+    let admin = isAdminEmail(email);
+    if (!admin) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", userId)
+        .maybeSingle();
+      admin = profile?.is_admin === true;
+    }
+    url.pathname = admin ? "/admin/users" : "/dashboard";
     url.search = "";
     return applyCacheHeaders(NextResponse.redirect(url));
   }

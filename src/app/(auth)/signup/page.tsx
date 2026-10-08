@@ -19,6 +19,16 @@ export default function SignupPage() {
   return (
     <AuthCard title="Create account" footer={<Link href="/login">Already registered? Log in</Link>}>
       <form action={action} className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="first_name">First name</Label>
+            <Input id="first_name" name="first_name" type="text" autoComplete="given-name" required />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="last_name">Last name</Label>
+            <Input id="last_name" name="last_name" type="text" autoComplete="family-name" required />
+          </div>
+        </div>
         <div className="space-y-1">
           <Label htmlFor="email">Email</Label>
           <Input id="email" name="email" type="email" required />

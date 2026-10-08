@@ -1,43 +1,27 @@
-"use client";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/admin";
+import { PendingClient } from "@/components/auth/pending-client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+export default async function PendingPage() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = typeof data?.claims?.sub === "string" ? data.claims.sub : null;
+  if (!userId) redirect("/login");
 
-export default function PendingPage() {
-  const router = useRouter();
-  const [signingOut, setSigningOut] = useState(false);
+  const email = typeof data?.claims?.email === "string" ? data.claims.email : null;
+  if (isAdminEmail(email)) redirect("/admin/users");
 
-  async function signOut() {
-    setSigningOut(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.replace("/login");
-  }
+  // Re-checked on every visit/refresh: as soon as the admin approves, the
+  // user is sent into the app (the (app) layout takes un-onboarded users to
+  // /onboarding from there). Nobody gets stuck on this page anymore.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_approved, is_admin")
+    .eq("id", userId)
+    .maybeSingle();
+  if (profile?.is_admin === true) redirect("/admin/users");
+  if (profile?.is_approved === true) redirect("/dashboard");
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md p-6 text-center">
-        <h1 className="text-lg font-semibold">Account pending approval</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Your account was created successfully. The site owner reviews every
-          new account by hand, and you will get full access as soon as yours
-          is approved.
-        </p>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Already approved? Reload this page to continue.
-        </p>
-        <div className="mt-4 flex justify-center gap-2">
-          <Button variant="outline" onClick={() => router.refresh()}>
-            Check again
-          </Button>
-          <Button variant="ghost" onClick={signOut} disabled={signingOut}>
-            {signingOut ? "Signing out…" : "Sign out"}
-          </Button>
-        </div>
-      </Card>
-    </div>
-  );
+  return <PendingClient />;
 }
