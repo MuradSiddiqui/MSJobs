@@ -30,7 +30,7 @@ export default async function CvPage() {
           rules, date columns — Google Docs style).
         </p>
         <a
-          href="/samples/ms-jobs-cv-sample.pdf"
+          href="/samples/stelle-cv-sample.pdf"
           target="_blank"
           rel="noreferrer"
           className="mt-2 inline-block text-sm font-medium text-accent hover:underline"
