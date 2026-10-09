@@ -4,12 +4,13 @@ import type { ReactNode } from "react";
 import type { Route } from "next";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { LayoutDashboard, Briefcase, Bookmark, Kanban, FileText, FolderOpen, User, Settings, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV = [
@@ -31,7 +32,6 @@ export function AppShell({
   email: string;
 }) {
   const path = usePathname();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -79,13 +79,6 @@ export function AppShell({
     </>
   );
 
-  async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }
-
   const nav = (
     <nav className="flex flex-col gap-0.5">
       {NAV.map((item) => {
@@ -129,9 +122,7 @@ export function AppShell({
         <div className="mt-auto space-y-2 border-t border-border/60 pt-4">
           {accountBlock}
           <div className="flex items-center justify-between gap-2">
-            <Button variant="ghost" size="sm" className="justify-start" onClick={signOut}>
-              Sign out
-            </Button>
+            <SignOutButton />
             <ThemeToggle />
           </div>
         </div>
@@ -158,9 +149,7 @@ export function AppShell({
           {nav}
           <div className="mt-3 space-y-1 border-t border-border/60 pt-3">
             {accountBlock}
-            <Button variant="ghost" size="sm" className="mt-1 w-full justify-start" onClick={signOut}>
-              Sign out
-            </Button>
+            <SignOutButton formClassName="mt-1 w-full" buttonClassName="w-full" />
           </div>
         </div>
       ) : null}

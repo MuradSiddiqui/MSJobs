@@ -68,3 +68,11 @@ export async function updatePasswordAction(formData: FormData) {
   if (error) return { error: error.message };
   redirect("/dashboard");
 }
+
+// Server-side sign out: clears the auth cookies on the server and then
+// redirects, so there is no client-side race that can leave the session alive.
+export async function signOutAction() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/login");
+}

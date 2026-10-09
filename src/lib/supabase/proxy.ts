@@ -9,6 +9,7 @@ const PROTECTED_PREFIXES = [
   "/saved",
   "/applications",
   "/cv",
+  "/documents",
   "/profile",
   "/settings",
   "/onboarding",
@@ -125,6 +126,14 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     if (!admin && matchesPrefix(path, "/admin")) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
+      url.search = "";
+      return applyCacheHeaders(NextResponse.redirect(url));
+    }
+    // The admin role is approvals-only: admins live in the admin portal and
+    // never enter the app dashboard.
+    if (admin && isProtected && !matchesPrefix(path, "/admin")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/users";
       url.search = "";
       return applyCacheHeaders(NextResponse.redirect(url));
     }
