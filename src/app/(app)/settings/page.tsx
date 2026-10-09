@@ -1,24 +1,31 @@
+import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/states";
-import { Card } from "@/components/ui/card";
+import { ProfileCard } from "@/components/settings/profile-card";
+import { MatchingCard } from "@/components/settings/matching-card";
+import { NotificationsCard } from "@/components/settings/notifications-card";
 import { DeleteAccount } from "@/components/settings/delete-account";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub as string;
+  const email = String(claims?.claims?.email ?? "");
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, avatar_url")
+    .eq("id", userId)
+    .maybeSingle();
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" description="Runtime configuration is environment-based." />
-      <Card className="space-y-2 p-4 text-sm">
-        <p>
-          AI provider and model IDs come from <code>AI_PROVIDER</code>, <code>AI_MODEL</code>, and{" "}
-          <code>AI_MODEL_STRONG</code>. They are never hardcoded in tasks.
-        </p>
-        <p>
-          Ingestion sources can be toggled with <code>INGEST_*</code> flags. Bundesagentur stays off
-          until you have legal clearance.
-        </p>
-        <p className="text-muted-foreground">
-          Google OAuth can be added later in the Supabase dashboard without a schema change.
-        </p>
-      </Card>
+      <PageHeader title="Settings" description="Your account, matching sources, and preferences." />
+      <ProfileCard
+        fullName={profile?.full_name ?? null}
+        email={email}
+        avatarUrl={profile?.avatar_url ?? null}
+      />
+      <MatchingCard />
+      <NotificationsCard />
       <DeleteAccount />
     </div>
   );

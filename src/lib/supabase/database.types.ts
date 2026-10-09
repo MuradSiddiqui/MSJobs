@@ -617,6 +617,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           current_education: string | null
           full_name: string | null
@@ -633,6 +634,7 @@ export type Database = {
           years_of_experience: number | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           current_education?: string | null
           full_name?: string | null
@@ -649,6 +651,7 @@ export type Database = {
           years_of_experience?: number | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           current_education?: string | null
           full_name?: string | null
@@ -939,6 +942,50 @@ export type Database = {
             foreignKeyName: "user_preferences_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_documents: {
+        Row: {
+          attach_to_applications: boolean
+          byte_size: number | null
+          created_at: string
+          doc_type: string
+          file_name: string
+          id: string
+          mime_type: string | null
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          attach_to_applications?: boolean
+          byte_size?: number | null
+          created_at?: string
+          doc_type?: string
+          file_name: string
+          id?: string
+          mime_type?: string | null
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          attach_to_applications?: boolean
+          byte_size?: number | null
+          created_at?: string
+          doc_type?: string
+          file_name?: string
+          id?: string
+          mime_type?: string | null
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
