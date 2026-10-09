@@ -4,6 +4,7 @@ import { getAdminCheck, approveUserAction, removeUserAction, setAdminAction } fr
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/card";
+import { AdminHeader } from "@/components/admin/admin-header";
 
 type UserRow = {
   id: string;
@@ -45,6 +46,7 @@ export default async function AdminUsersPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 p-6">
+      <AdminHeader email={check.email} />
       <Card className="p-6">
         <h1 className="text-lg font-semibold">User approvals</h1>
         <p className="mt-1 text-sm text-muted-foreground">
