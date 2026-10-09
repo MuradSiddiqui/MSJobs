@@ -5,7 +5,7 @@ import type { Route } from "next";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Briefcase, Bookmark, Kanban, FileText, User, Settings, Menu, X } from "lucide-react";
+import { LayoutDashboard, Briefcase, Bookmark, Kanban, FileText, FolderOpen, User, Settings, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ const NAV = [
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/applications", label: "Applications", icon: Kanban },
   { href: "/cv", label: "CV", icon: FileText },
+  { href: "/documents", label: "Documents", icon: FolderOpen },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
