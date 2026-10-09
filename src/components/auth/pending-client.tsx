@@ -1,21 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 
 export function PendingClient() {
   const router = useRouter();
-  const [signingOut, setSigningOut] = useState(false);
-
-  async function signOut() {
-    setSigningOut(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.replace("/login");
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -33,9 +24,7 @@ export function PendingClient() {
           <Button variant="outline" onClick={() => router.push("/dashboard")}>
             Check again
           </Button>
-          <Button variant="ghost" onClick={signOut} disabled={signingOut}>
-            {signingOut ? "Signing out…" : "Sign out"}
-          </Button>
+          <SignOutButton />
         </div>
       </Card>
     </div>
