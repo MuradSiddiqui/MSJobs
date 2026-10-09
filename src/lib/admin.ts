@@ -1,16 +1,16 @@
 import { env } from "@/lib/env";
 
 /**
- * The one account that can approve other users. Set ADMIN_EMAIL in the
- * environment; falls back to the owner's login email so the gate never
- * locks everyone out by accident.
+ * Optional safety-net admin email, read from the ADMIN_EMAIL environment
+ * variable. When it is not set, there is no email-based admin: admin status
+ * comes solely from the profiles.is_admin flag in the database.
  */
 export function getAdminEmail(): string {
-  const fromEnv = env().ADMIN_EMAIL?.trim().toLowerCase();
-  return fromEnv && fromEnv.length > 0 ? fromEnv : "muradsiddiqui99@gmail.com";
+  return env().ADMIN_EMAIL?.trim().toLowerCase() ?? "";
 }
 
 export function isAdminEmail(email: string | null | undefined): boolean {
-  if (!email) return false;
-  return email.trim().toLowerCase() === getAdminEmail();
+  const adminEmail = getAdminEmail();
+  if (!email || !adminEmail) return false;
+  return email.trim().toLowerCase() === adminEmail;
 }
