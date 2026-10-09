@@ -1,0 +1,66 @@
+"use server";
+
+import { createClient, getAuthUserId } from "@/lib/supabase/server";
+import { env } from "@/lib/env";
+
+const MAX_BYTES = 5 * 1024 * 1024;
+
+const ALLOWED_MIME_TO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+export type AvatarUploadResult =
+  | { ok: true; avatarUrl: string }
+  | { ok: false; error: string };
+
+/**
+ * Uploads a profile photo to the public `avatars` bucket at
+ * `{userId}/avatar.{ext}` (upsert) and stores the public URL on
+ * `profiles.avatar_url`. The user id always comes from the session, never
+ * from client input.
+ */
+export async function uploadAvatarAction(formData: FormData): Promise<AvatarUploadResult> {
+  const userId = await getAuthUserId();
+  if (!userId) {
+    return { ok: false, error: "Not signed in." };
+  }
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Choose an image file to upload." };
+  }
+
+  const ext = ALLOWED_MIME_TO_EXT[file.type];
+  if (!ext) {
+    return { ok: false, error: "Only JPEG, PNG, or WebP images are accepted." };
+  }
+  if (file.size > MAX_BYTES) {
+    return { ok: false, error: "Image must be 5 MB or smaller." };
+  }
+
+  const path = `${userId}/avatar.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const supabase = await createClient();
+
+  const { error: uploadError } = await supabase.storage.from("avatars").upload(path, buffer, {
+    contentType: file.type,
+    upsert: true,
+  });
+  if (uploadError) {
+    return { ok: false, error: uploadError.message };
+  }
+
+  const avatarUrl = `${env().NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${path}`;
+
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", userId);
+  if (updateError) {
+    return { ok: false, error: updateError.message };
+  }
+
+  return { ok: true, avatarUrl };
+}

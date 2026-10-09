@@ -6,7 +6,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Briefcase, Bookmark, Kanban, FileText, User, Settings, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -32,6 +32,51 @@ export function AppShell({
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Show the profile photo in the account area when one is set; the
+  // profiles.avatar_url column does not exist until the settings SQL is
+  // applied, so any failure here silently keeps the initial fallback.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (!cancelled && typeof data?.avatar_url === "string" && data.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+        }
+      } catch {
+        // Keep the fallback.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const accountBlock = (
+    <>
+      <div className="flex items-center gap-2 px-2.5">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent/10 text-xs font-semibold text-accent">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Profile photo" className="h-full w-full object-cover" />
+          ) : (
+            <span aria-hidden="true">{email.charAt(0).toUpperCase()}</span>
+          )}
+        </div>
+        <p className="truncate text-xs text-muted-foreground">{email}</p>
+      </div>
+    </>
+  );
 
   async function signOut() {
     const supabase = createClient();
@@ -81,7 +126,7 @@ export function AppShell({
         </Link>
         {nav}
         <div className="mt-auto space-y-2 border-t border-border/60 pt-4">
-          <p className="truncate px-2.5 text-xs text-muted-foreground">{email}</p>
+          {accountBlock}
           <div className="flex items-center justify-between gap-2">
             <Button variant="ghost" size="sm" className="justify-start" onClick={signOut}>
               Sign out
@@ -110,8 +155,8 @@ export function AppShell({
       {open ? (
         <div className="border-b border-border/80 bg-sidebar/95 p-3 backdrop-blur-md md:hidden">
           {nav}
-          <div className="mt-3 border-t border-border/60 pt-3">
-            <p className="truncate px-2.5 text-xs text-muted-foreground">{email}</p>
+          <div className="mt-3 space-y-1 border-t border-border/60 pt-3">
+            {accountBlock}
             <Button variant="ghost" size="sm" className="mt-1 w-full justify-start" onClick={signOut}>
               Sign out
             </Button>

@@ -23,11 +23,14 @@ export async function completeOnboarding(formData: FormData) {
     .map((s) => s.trim())
     .filter(Boolean);
   const types = formData.getAll("employment_types").map(String);
+  const workStyles = formData.getAll("remote_preference").map(String);
 
+  // The wizard does not ask for a name (it comes from signup), so full_name
+  // is left untouched. German states were dropped from the wizard as
+  // redundant. Location is derived from the first preferred city.
   await supabase.from("profiles").update({
-    full_name: String(formData.get("full_name") ?? ""),
     headline: String(formData.get("headline") ?? ""),
-    location: String(formData.get("location") ?? ""),
+    location: cities[0] ?? "",
     years_of_experience: Number(formData.get("years_of_experience") || 0),
     student_status: formData.get("student_status") === "on",
     onboarding_completed_at: new Date().toISOString(),
@@ -39,8 +42,7 @@ export async function completeOnboarding(formData: FormData) {
     technical_skills: skills,
     employment_types: types,
     relocation_ok: formData.get("relocation_ok") === "on",
-    german_states: formData.getAll("german_states").map(String),
-    remote_preference: formData.getAll("remote_preference").map(String),
+    remote_preference: workStyles,
   }).eq("user_id", userId);
 
   revalidatePath("/dashboard");

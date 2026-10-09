@@ -1,9 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader, EmptyState } from "@/components/shared/states";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { uploadResume } from "@/server/cv";
-import { CvEditor } from "@/components/cv/editor";
+import { UploadZone, EmptyCvState } from "@/components/cv/upload-zone";
+import { CvStudio, type CvVersion } from "@/components/cv/studio";
 
 export default async function CvPage() {
   const supabase = await createClient();
@@ -11,57 +8,42 @@ export default async function CvPage() {
   const userId = claims?.claims?.sub as string;
   const { data: versions } = await supabase
     .from("resume_versions")
-    .select("*")
+    .select(
+      "id, file_name, mime_type, byte_size, parse_status, parse_error, parsed, user_edited, created_at",
+    )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  const latest = versions?.[0];
+  const list = (versions ?? []) as unknown as CvVersion[];
+  const stamp = `${list.length}:${list.map((v) => v.id).join(",")}`;
 
   return (
-    <div>
-      <PageHeader
-        title="CV"
-        description="Versions are kept. Corrections never get overwritten by a re-parse."
-      />
-      <Card className="mb-4 p-4 text-sm">
-        <p className="font-medium">CV template sample</p>
-        <p className="mt-1 text-muted-foreground">
-          Tailored job CVs use the same classic 2-page layout as this sample (centered header, section
-          rules, date columns — Google Docs style).
-        </p>
+    <div className="space-y-7">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-[30px] font-bold tracking-tight text-[#1e2a3a]">
+            CV Studio
+          </h1>
+          <p className="mt-1.5 text-[15px] text-[#667085]">
+            Upload once. MS Jobs keeps versions and tailors per job.
+          </p>
+        </div>
         <a
           href="/samples/stelle-cv-sample.pdf"
           target="_blank"
           rel="noreferrer"
-          className="mt-2 inline-block text-sm font-medium text-accent hover:underline"
+          className="mt-1 text-sm font-medium text-[#0e7490] hover:underline"
         >
-          View sample CV PDF
+          View sample
         </a>
-      </Card>
-      <Card className="p-4">
-        <form action={uploadResume} className="flex flex-wrap items-end gap-3">
-          <input type="file" name="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required />
-          <Button type="submit">Upload CV</Button>
-          <p className="text-xs text-muted-foreground">PDF or DOCX, max 5 MB. Files stay private.</p>
-        </form>
-      </Card>
-      {(versions ?? []).length === 0 ? (
-        <EmptyState className="mt-4" title="No CV uploaded" description="Upload a PDF or DOCX to extract a structured profile." />
+      </div>
+
+      <UploadZone />
+
+      {list.length === 0 ? (
+        <EmptyCvState />
       ) : (
-        <div className="mt-6 space-y-3">
-          {(versions ?? []).map((v) => (
-            <Card key={v.id} className="p-3 text-sm">
-              <div className="flex justify-between">
-                <span className="font-medium">{v.file_name}</span>
-                <span className="text-muted-foreground">{v.parse_status}</span>
-              </div>
-              {v.parse_error ? <p className="mt-1 text-danger">{v.parse_error}</p> : null}
-            </Card>
-          ))}
-          {latest?.parsed ? (
-            <CvEditor versionId={latest.id} parsed={(latest.user_edited ?? latest.parsed) as object} />
-          ) : null}
-        </div>
+        <CvStudio key={stamp} versions={list} />
       )}
     </div>
   );

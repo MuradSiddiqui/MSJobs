@@ -1,13 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { Suspense, useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { AuthCard } from "@/components/auth/auth-card";
+import { AuthCard, AuthDivider } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { signInAction } from "@/server/auth";
-import { Suspense } from "react";
 
 function LoginForm() {
   const params = useSearchParams();
@@ -18,25 +17,72 @@ function LoginForm() {
     },
     undefined,
   );
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <AuthCard title="Log in" footer={<Link href="/signup">Need an account? Sign up</Link>}>
-      <form action={action} className="space-y-3">
-        <div className="space-y-1">
+    <AuthCard
+      title="Welcome back"
+      subtitle="Log in to continue your matchmaking."
+      footer={
+        <>
+          <AuthDivider />
+          <p className="text-center text-sm">
+            <span className="text-[#667085]">New to MS Jobs?</span>{" "}
+            <Link href="/signup" className="font-semibold text-[#0E7490] hover:underline">
+              Create account
+            </Link>
+          </p>
+          <p className="text-center text-[11px] text-[#98A2B3]">
+            Admins land on the admin portal.
+          </p>
+        </>
+      }
+    >
+      <form action={action} className="space-y-4">
+        <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" required />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            required
+            className="h-11 rounded-[10px] border-[#E4E0D3] bg-white"
+          />
         </div>
-        <div className="space-y-1">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" name="password" type="password" required />
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-pressed={showPassword}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="text-[13px] font-medium text-[#0E7490] hover:underline"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
+          <Input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            required
+            className="h-11 rounded-[10px] border-[#E4E0D3] bg-white"
+          />
         </div>
         <input type="hidden" name="next" value={params.get("next") ?? "/dashboard"} />
         {state?.error ? <p className="text-sm text-danger">{state.error}</p> : null}
-        <Button className="w-full" type="submit">
+        <Button className="w-full" size="lg" type="submit">
           Log in
         </Button>
-        <p className="text-center text-xs">
-          <Link href="/forgot-password" className="text-muted-foreground hover:underline">
+        <p className="text-center text-sm">
+          <Link
+            href="/forgot-password"
+            className="font-medium text-[#0E7490] hover:underline"
+          >
             Forgot password?
           </Link>
         </p>
