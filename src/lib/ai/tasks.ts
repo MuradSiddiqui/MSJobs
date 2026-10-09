@@ -108,6 +108,25 @@ For projects include bullets array when the resume lists bullet points.`,
   }, userId, true);
 }
 
+export async function applyResumeFeedback(input: {
+  resume: unknown;
+  feedback: string;
+  userId: string;
+}): Promise<ResumeParseResult> {
+  return cached("apply_resume_feedback", ResumeParseSchema, input, async () => {
+    const { output } = await generateText({
+      model: model(true),
+      output: Output.object({ schema: ResumeParseSchema }),
+      system: `Revise a structured resume from natural-language feedback. ${TRUTHFULNESS_RULES}
+Be conservative: change ONLY what the feedback asks for and keep every other field as close to the original as possible.
+Never invent employers, dates, skills, degrees, or achievements that are not in the resume or clearly stated in the feedback.
+Return the complete resume object in the same schema.`,
+      prompt: `${wrapUntrusted("FEEDBACK", input.feedback, 4_000)}\n${wrapUntrusted("RESUME_JSON", JSON.stringify(input.resume), 20_000)}`,
+    });
+    return output;
+  }, input.userId, true);
+}
+
 export async function parseJob(text: string): Promise<JobAnalysis> {
   return cached("parse_job", JobAnalysisSchema, text, async () => {
     const { output } = await generateText({
@@ -173,8 +192,8 @@ export async function generateCoverLetter(input: {
     length === "short"
       ? "Keep it under 180 words."
       : length === "long"
-        ? "Aim for about 350–450 words with concrete examples."
-        : "Aim for about 220–280 words.";
+        ? "Aim for about 350-450 words with concrete examples."
+        : "Aim for about 220-280 words.";
   return cached("cover_letter", CoverLetterSchema, input, async () => {
     const { output } = await generateText({
       model: model(true),
@@ -185,7 +204,7 @@ Rules:
 - Language must be ${input.language === "de" ? "German (Sie-form, professional)" : "English (professional)"}.
 - Tone: ${input.tone}. Length: ${length}. ${lengthHint}
 - Use ONLY facts present in the resume JSON. Never invent employers, degrees, tools, or achievements.
-- Open with the role title and company. Tie 2–3 concrete resume strengths to the job.
+- Open with the role title and company. Tie 2-3 concrete resume strengths to the job.
 - Mention location/student status only if present in the resume.
 - Close with a clear ask for an interview and polite sign-off.
 - subject: short email subject line for this application.

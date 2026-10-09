@@ -4,33 +4,33 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { extractResumeText } from "@/lib/resume/extract-text";
-import { parseResume } from "@/lib/ai/tasks";
+import { applyResumeFeedback, parseResume } from "@/lib/ai/tasks";
+import type { ResumeParseResult } from "@/lib/core/schemas/ai";
 
-const MAX = 5 * 1024 * 1024;
+const MAX = 30 * 1024 * 1024;
 
-export async function uploadResume(formData: FormData): Promise<void> {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims?.sub as string | undefined;
-  if (!userId) redirect("/login");
+const ALLOWED_MIME: Record<string, "pdf" | "docx" | "png"> = {
+  "application/pdf": "pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "image/png": "png",
+};
 
-  const file = formData.get("file");
+function validateUploadFile(file: unknown): asserts file is File {
   if (!(file instanceof File)) {
-    throw new Error("Choose a PDF or DOCX file.");
+    throw new Error("Choose a PDF, DOCX, or PNG file.");
   }
   if (file.size > MAX) {
-    throw new Error("File must be 5 MB or smaller.");
+    throw new Error("File must be 30 MB or smaller.");
   }
-  const mime = file.type;
-  const allowed = [
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ];
-  if (!allowed.includes(mime)) {
-    throw new Error("Only PDF and DOCX are accepted.");
+  if (!ALLOWED_MIME[file.type]) {
+    throw new Error("Only PDF, DOCX, and PNG are accepted.");
   }
+}
 
-  const ext = mime.includes("pdf") ? "pdf" : "docx";
+async function runUpload(file: File, userId: string): Promise<void> {
+  const supabase = await createClient();
+  const mime = file.type;
+  const ext = ALLOWED_MIME[mime];
   const versionId = crypto.randomUUID();
   const path = `${userId}/${versionId}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -103,9 +103,44 @@ export async function uploadResume(formData: FormData): Promise<void> {
       })
       .eq("id", version.id);
   }
+}
+
+export async function uploadResume(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub as string | undefined;
+  if (!userId) redirect("/login");
+
+  const file = formData.get("file");
+  validateUploadFile(file);
+  await runUpload(file, userId);
 
   revalidatePath("/cv");
   redirect("/cv");
+}
+
+// Client-friendly variant: returns errors instead of throwing, no redirect.
+export async function uploadResumeAction(
+  formData: FormData,
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub as string | undefined;
+  if (!userId) return { ok: false, error: "You are not signed in." };
+
+  const file = formData.get("file");
+  try {
+    validateUploadFile(file);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Upload failed." };
+  }
+  try {
+    await runUpload(file, userId);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Upload failed." };
+  }
+  revalidatePath("/cv");
+  return { ok: true };
 }
 
 export async function saveResumeEdits(formData: FormData): Promise<void> {
@@ -121,4 +156,83 @@ export async function saveResumeEdits(formData: FormData): Promise<void> {
     .eq("id", id)
     .eq("user_id", userId);
   revalidatePath("/cv");
+}
+
+// Applies natural-language feedback to the latest parsed JSON of a version.
+// Saves the revised JSON to user_edited on a NEW version row so each edit
+// appears as its own entry in the version history.
+export async function applyResumeFeedbackAction(
+  versionId: string,
+  feedback: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub as string | undefined;
+  if (!userId) return { ok: false, error: "You are not signed in." };
+
+  const clean = feedback.trim();
+  if (!clean) return { ok: false, error: "Describe the change you want first." };
+  if (clean.length > 4000) return { ok: false, error: "Keep feedback under 4000 characters." };
+
+  const { data: version, error } = await supabase
+    .from("resume_versions")
+    .select(
+      "id, resume_id, user_id, storage_path, file_name, mime_type, byte_size, parsed, user_edited",
+    )
+    .eq("id", versionId)
+    .eq("user_id", userId)
+    .single();
+  if (error || !version) return { ok: false, error: "CV version not found." };
+
+  const base = (version.user_edited ?? version.parsed) as ResumeParseResult | null;
+  if (!base) return { ok: false, error: "This CV has no parsed data yet." };
+
+  try {
+    const revised = await applyResumeFeedback({ resume: base, feedback: clean, userId });
+    const { error: insertError } = await supabase.from("resume_versions").insert({
+      resume_id: version.resume_id,
+      user_id: userId,
+      storage_path: version.storage_path,
+      file_name: version.file_name,
+      mime_type: version.mime_type,
+      byte_size: version.byte_size,
+      parsed: base,
+      user_edited: revised,
+      parse_status: "succeeded",
+    });
+    if (insertError) throw new Error(insertError.message);
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Could not apply the feedback.",
+    };
+  }
+
+  revalidatePath("/cv");
+  return { ok: true };
+}
+
+// Signed URL for previewing or downloading the original uploaded file.
+export async function getResumeFileUrl(
+  versionId: string,
+): Promise<{ ok: boolean; url?: string; fileName?: string; error?: string }> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub as string | undefined;
+  if (!userId) return { ok: false, error: "You are not signed in." };
+
+  const { data: version, error } = await supabase
+    .from("resume_versions")
+    .select("storage_path, file_name")
+    .eq("id", versionId)
+    .eq("user_id", userId)
+    .single();
+  if (error || !version) return { ok: false, error: "File not found." };
+
+  const { data: signed, error: signError } = await supabase.storage
+    .from("resumes")
+    .createSignedUrl(version.storage_path, 300);
+  if (signError || !signed) return { ok: false, error: "Could not prepare the file." };
+
+  return { ok: true, url: signed.signedUrl, fileName: version.file_name };
 }
