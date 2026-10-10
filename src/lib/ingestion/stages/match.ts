@@ -138,9 +138,31 @@ export async function loadOnboardedUsers(admin: AdminClient): Promise<MatchUser[
     ignoredByUser.set(row.user_id, set);
   }
 
+  // CV text feeds the semantic part of the match score. Users without a
+  // parsed CV fall back to their onboarding answers only.
+  const { data: resumes } = await admin
+    .from("resumes")
+    .select("id, user_id")
+    .in("user_id", userIds)
+    .eq("is_active", true);
+  const resumeIdByUser = new Map((resumes ?? []).map((r) => [r.user_id, r.id]));
+  const resumeIds = [...resumeIdByUser.values()];
+  const { data: versions } = resumeIds.length
+    ? await admin
+        .from("resume_versions")
+        .select("resume_id, extracted_text")
+        .in("resume_id", resumeIds)
+        .eq("parse_status", "succeeded")
+    : { data: [] as { resume_id: string; extracted_text: string | null }[] };
+  const textByResume = new Map(
+    (versions ?? []).map((v) => [v.resume_id, v.extracted_text ?? ""]),
+  );
+
   return profiles.flatMap((profile) => {
     const pref = prefsByUser.get(profile.id);
     if (!pref) return [];
+    const resumeId = resumeIdByUser.get(profile.id);
+    const experienceText = (resumeId && textByResume.get(resumeId)) || "";
     const matchProfile: UserMatchProfile = {
       desiredRoles: pref.desired_roles,
       desiredEmploymentTypes: pref.employment_types,
@@ -161,7 +183,7 @@ export async function loadOnboardedUsers(admin: AdminClient): Promise<MatchUser[
       preferredKeywords: pref.preferred_keywords,
       headline: profile.headline,
       summary: null,
-      experienceText: "",
+      experienceText,
     };
     return [
       {
