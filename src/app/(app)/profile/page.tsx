@@ -9,13 +9,24 @@ export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims?.sub as string;
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", userId).single();
-  const { data: prefs } = await supabase.from("user_preferences").select("*").eq("user_id", userId).single();
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+  const { data: prefs } = await supabase.from("user_preferences").select("*").eq("user_id", userId).maybeSingle();
 
   return (
     <div>
       <PageHeader title="Profile" description="Used for matching. Edit freely after onboarding." />
-      <form action={updateProfile} className="max-w-xl space-y-4">
+      <div className="mb-5 rounded-xl border border-accent/25 bg-accent/5 px-4 py-3 text-sm text-muted-foreground">
+        Uploading a CV in CV Studio automatically fills your name, headline, location,
+        experience, education, and skills here. Review and correct anything it gets wrong.
+      </div>
+      <form
+        action={async (formData: FormData) => {
+          "use server";
+          const result = await updateProfile(formData);
+          if (!result.ok) throw new Error(result.error ?? "Could not save your profile.");
+        }}
+        className="max-w-xl space-y-4"
+      >
         <div className="space-y-1">
           <Label htmlFor="full_name">Name</Label>
           <Input id="full_name" name="full_name" defaultValue={profile?.full_name ?? ""} />

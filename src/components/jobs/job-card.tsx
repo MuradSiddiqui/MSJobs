@@ -7,16 +7,21 @@ import { ArrowUpRight, Building2, MapPin } from "lucide-react";
 export function MatchBadge({ score, label }: { score: number; label: string }) {
   const tone =
     score >= 90
-      ? "text-match-excellent"
+      ? "bg-match-excellent/10 text-match-excellent"
       : score >= 80
-        ? "text-match-strong"
+        ? "bg-match-strong/10 text-match-strong"
         : score >= 70
-          ? "text-match-good"
+          ? "bg-match-good/10 text-match-good"
           : score >= 60
-            ? "text-match-possible"
-            : "text-match-weak";
+            ? "bg-match-possible/10 text-match-possible"
+            : "bg-match-weak/10 text-match-weak";
   return (
-    <span className={cn("text-sm font-semibold tabular-nums", tone)}>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums",
+        tone,
+      )}
+    >
       {score}% {matchLabelCopy(label)}
     </span>
   );
@@ -106,6 +111,7 @@ export function JobCard({
           {skills.slice(0, 5).map((skill) => (
             <Badge key={skill}>{skill}</Badge>
           ))}
+          {skills.length > 5 ? <Badge tone="muted">+{skills.length - 5} more</Badge> : null}
         </div>
       ) : null}
       <div className="mt-4 flex items-center justify-between border-t border-border/70 pt-3">

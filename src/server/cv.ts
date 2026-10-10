@@ -27,6 +27,66 @@ function validateUploadFile(file: unknown): asserts file is File {
   }
 }
 
+function extractYear(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const lower = value.toLowerCase();
+  if (lower.includes("present") || lower.includes("now") || lower.includes("current")) {
+    return new Date().getFullYear();
+  }
+  const match = value.match(/(19|20)\d{2}/);
+  return match ? Number(match[0]) : null;
+}
+
+// Rough estimate from work date ranges (year granularity). The user can
+// correct it on the profile page; it is only used for auto-fill.
+function estimateYearsOfExperience(
+  work: Array<{ startDate: string | null; endDate: string | null }>,
+): number | null {
+  let totalMonths = 0;
+  for (const job of work) {
+    const start = extractYear(job.startDate);
+    if (start == null) continue;
+    const end = extractYear(job.endDate) ?? new Date().getFullYear();
+    totalMonths += Math.max(0, (end - start) * 12);
+  }
+  if (totalMonths <= 0) return null;
+  return Math.round((totalMonths / 12) * 10) / 10;
+}
+
+// Fills profile fields from a successful CV parse. Only sets fields the CV
+// actually contains; everything else is left for the user to edit.
+async function syncProfileFromParse(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  parsed: ResumeParseResult,
+): Promise<void> {
+  const patch: Record<string, string | number> = {};
+  if (parsed.name) patch.full_name = parsed.name;
+  if (parsed.headline) patch.headline = parsed.headline;
+  if (parsed.location) patch.location = parsed.location;
+  const years = estimateYearsOfExperience(parsed.workExperience ?? []);
+  if (years != null) patch.years_of_experience = years;
+  const edu = (parsed.education ?? [])[0];
+  if (edu?.institution) {
+    const detail = [edu.degree, edu.field].filter(Boolean).join(", ");
+    patch.current_education = detail ? `${detail} at ${edu.institution}` : edu.institution;
+  }
+  if (Object.keys(patch).length > 0) {
+    await supabase.from("profiles").update(patch).eq("id", userId);
+  }
+
+  const skills = [
+    ...(parsed.skills ?? []),
+    ...(parsed.programmingLanguages ?? []),
+    ...(parsed.frameworks ?? []),
+  ];
+  if (skills.length > 0) {
+    await supabase
+      .from("user_preferences")
+      .upsert({ user_id: userId, technical_skills: skills }, { onConflict: "user_id" });
+  }
+}
+
 async function runUpload(file: File, userId: string): Promise<void> {
   const supabase = await createClient();
   const mime = file.type;
@@ -77,23 +137,7 @@ async function runUpload(file: File, userId: string): Promise<void> {
         parse_status: "succeeded",
       })
       .eq("id", version.id);
-    if (parsed.headline || parsed.name) {
-      await supabase
-        .from("profiles")
-        .update({
-          full_name: parsed.name ?? undefined,
-          headline: parsed.headline ?? undefined,
-        })
-        .eq("id", userId);
-    }
-    const skills = [
-      ...(parsed.skills ?? []),
-      ...(parsed.programmingLanguages ?? []),
-      ...(parsed.frameworks ?? []),
-    ];
-    if (skills.length) {
-      await supabase.from("user_preferences").update({ technical_skills: skills }).eq("user_id", userId);
-    }
+    await syncProfileFromParse(supabase, userId, parsed);
   } catch (error) {
     await supabase
       .from("resume_versions")
@@ -278,6 +322,7 @@ export async function retryResumeParseAction(versionId: string): Promise<void> {
       .from("resume_versions")
       .update({ extracted_text: text, parsed, parse_status: "succeeded", parse_error: null })
       .eq("id", version.id);
+    await syncProfileFromParse(supabase, userId, parsed);
   } catch (error) {
     await supabase
       .from("resume_versions")

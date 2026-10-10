@@ -4,10 +4,12 @@ import { cn } from "@/lib/utils";
 export function EmptyState({
   title,
   description,
+  action,
   className,
 }: {
   title: string;
   description?: string;
+  action?: ReactNode;
   className?: string;
 }) {
   return (
@@ -19,6 +21,7 @@ export function EmptyState({
     >
       <p className="font-display text-base font-medium tracking-tight">{title}</p>
       {description ? <p className="mt-1.5 text-sm text-muted-foreground">{description}</p> : null}
+      {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
     </div>
   );
 }
