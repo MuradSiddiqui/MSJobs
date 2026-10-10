@@ -22,6 +22,14 @@ export type AvatarUploadResult =
  * from client input.
  */
 export async function uploadAvatarAction(formData: FormData): Promise<AvatarUploadResult> {
+  try {
+    return await uploadAvatarInner(formData);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Upload failed. Try again." };
+  }
+}
+
+async function uploadAvatarInner(formData: FormData): Promise<AvatarUploadResult> {
   const userId = await getAuthUserId();
   if (!userId) {
     return { ok: false, error: "Not signed in." };

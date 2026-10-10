@@ -45,8 +45,8 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims?.sub as string;
 
-  // Jobs are matched against the CV: no CV, no job list. The user uploads
-  // once on /cv and personalized scores appear here.
+  // Jobs are matched against the CV: no usable CV, no job list. The user
+  // uploads once on /cv and personalized scores appear here.
   const { data: activeResume } = await supabase
     .from("resumes")
     .select("id")
@@ -54,7 +54,21 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     .eq("is_active", true)
     .maybeSingle();
 
-  if (!activeResume) {
+  let parsedCv = false;
+  let parseFailed = false;
+  if (activeResume) {
+    const { data: version } = await supabase
+      .from("resume_versions")
+      .select("parse_status")
+      .eq("resume_id", activeResume.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    parsedCv = version?.parse_status === "succeeded";
+    parseFailed = version?.parse_status === "failed";
+  }
+
+  if (!parsedCv) {
     return (
       <div>
         <PageHeader
@@ -63,14 +77,15 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
         />
         <div className="rounded-xl border border-dashed border-border/80 bg-card/40 px-6 py-14 text-center">
           <p className="font-display text-base font-medium tracking-tight">
-            Upload your CV first
+            {parseFailed ? "Your CV could not be parsed" : "Upload your CV first"}
           </p>
           <p className="mx-auto mt-1.5 max-w-md text-sm text-muted-foreground">
-            Every job here is scored against your CV. Upload it once and your
-            personalized match percentages will appear.
+            {parseFailed
+              ? "Every job here is scored against your CV, but parsing failed. Fix it in CV Studio and your personalized match percentages will appear."
+              : "Every job here is scored against your CV. Upload it once and your personalized match percentages will appear."}
           </p>
           <Button asChild className="mt-4">
-            <Link href="/cv">Upload CV</Link>
+            <Link href="/cv">{parseFailed ? "Fix in CV Studio" : "Upload CV"}</Link>
           </Button>
         </div>
       </div>
