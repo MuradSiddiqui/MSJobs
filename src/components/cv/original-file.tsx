@@ -34,7 +34,7 @@ export function OriginalFile({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-[#e4e0d3] bg-white p-8 text-center text-sm text-danger">
+      <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-danger">
         {error}
       </div>
     );
@@ -43,10 +43,10 @@ export function OriginalFile({
   if (!url) {
     return (
       <div
-        className="flex h-64 items-center justify-center rounded-xl border border-[#e4e0d3] bg-white"
+        className="flex h-64 items-center justify-center rounded-xl border border-border bg-card"
         aria-busy="true"
       >
-        <p className="text-sm text-[#667085]">Loading original file...</p>
+        <p className="text-sm text-muted-foreground">Loading original file...</p>
       </div>
     );
   }
@@ -56,7 +56,7 @@ export function OriginalFile({
       <iframe
         src={url}
         title={`Original file: ${fileName}`}
-        className="h-[880px] w-full rounded-xl border border-[#e4e0d3] bg-white"
+        className="h-[880px] w-full rounded-xl border border-border bg-card"
       />
     );
   }
@@ -67,16 +67,16 @@ export function OriginalFile({
       <img
         src={url}
         alt={`Original file: ${fileName}`}
-        className="w-full rounded-xl border border-[#e4e0d3] bg-white"
+        className="w-full rounded-xl border border-border bg-card"
       />
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-[#e4e0d3] bg-white p-10 text-center">
-      <FileText className="size-10 text-[#0e7490]" aria-hidden />
-      <p className="text-sm font-medium text-[#1e2a3a]">Preview not available for Word files</p>
-      <p className="text-xs text-[#667085]">Download the file to view it.</p>
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-10 text-center">
+      <FileText className="size-10 text-accent" aria-hidden />
+      <p className="text-sm font-medium text-foreground">Preview not available for Word files</p>
+      <p className="text-xs text-muted-foreground">Download the file to view it.</p>
       <Button
         type="button"
         variant="outline"

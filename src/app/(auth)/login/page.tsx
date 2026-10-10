@@ -27,12 +27,12 @@ function LoginForm() {
         <>
           <AuthDivider />
           <p className="text-center text-sm">
-            <span className="text-[#667085]">New to MS Jobs?</span>{" "}
-            <Link href="/signup" className="font-semibold text-[#0E7490] hover:underline">
+            <span className="text-muted-foreground">New to MS Jobs?</span>{" "}
+            <Link href="/signup" className="font-semibold text-accent hover:underline">
               Create account
             </Link>
           </p>
-          <p className="text-center text-[11px] text-[#98A2B3]">
+          <p className="text-center text-[11px] text-muted-foreground">
             Admins land on the admin portal.
           </p>
         </>
@@ -48,7 +48,7 @@ function LoginForm() {
             autoComplete="email"
             placeholder="you@example.com"
             required
-            className="h-11 rounded-[10px] border-[#E4E0D3] bg-white"
+            className="h-11 rounded-[10px] border-border bg-card"
           />
         </div>
         <div className="space-y-1.5">
@@ -59,7 +59,7 @@ function LoginForm() {
               onClick={() => setShowPassword((v) => !v)}
               aria-pressed={showPassword}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="text-[13px] font-medium text-[#0E7490] hover:underline"
+              className="text-[13px] font-medium text-accent hover:underline"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -70,7 +70,7 @@ function LoginForm() {
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"
             required
-            className="h-11 rounded-[10px] border-[#E4E0D3] bg-white"
+            className="h-11 rounded-[10px] border-border bg-card"
           />
         </div>
         <input type="hidden" name="next" value={params.get("next") ?? "/dashboard"} />
@@ -81,7 +81,7 @@ function LoginForm() {
         <p className="text-center text-sm">
           <Link
             href="/forgot-password"
-            className="font-medium text-[#0E7490] hover:underline"
+            className="font-medium text-accent hover:underline"
           >
             Forgot password?
           </Link>

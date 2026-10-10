@@ -37,7 +37,7 @@ export function RequestChangesCard({
 
   return (
     <Card className="p-5">
-      <h2 className="font-display text-base font-semibold tracking-tight text-[#1e2a3a]">
+      <h2 className="font-display text-base font-semibold tracking-tight text-foreground">
         Request changes
       </h2>
       <div className="mt-3 space-y-3">
@@ -58,7 +58,7 @@ export function RequestChangesCard({
           type="button"
           disabled={!canSubmit}
           onClick={submit}
-          className="w-full bg-[#0e7490] hover:bg-[#155e75]"
+          className="w-full bg-accent hover:bg-accent/90"
         >
           <Sparkles className="size-4" aria-hidden />
           {pending ? "Applying feedback..." : "Apply feedback"}
@@ -69,7 +69,7 @@ export function RequestChangesCard({
           </p>
         ) : null}
         {disabled ? (
-          <p className="text-xs text-[#667085]">
+          <p className="text-xs text-muted-foreground">
             Feedback is available once the CV has been parsed successfully.
           </p>
         ) : null}

@@ -95,10 +95,12 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const { data: ignored } = await supabase.from("ignored_jobs").select("job_id").eq("user_id", userId);
   const ignoredIds = setOf((ignored ?? []).map((r) => r.job_id));
 
+  // Note: match rows are re-read after scoring below, so the jobs query
+  // intentionally skips the user_job_matches join here.
   let query = supabase
     .from("jobs")
     .select(
-      "id, title, city, remote_type, employment_category, effective_posted_at, first_seen_at, posted_at_is_estimated, required_skills, posting_language, companies(name), job_source_postings(source), user_job_matches!left(overall_score, label, user_id)",
+      "id, title, city, remote_type, employment_category, effective_posted_at, first_seen_at, posted_at_is_estimated, required_skills, posting_language, companies(name), job_source_postings(source)",
     )
     .eq("is_active", true)
     .limit(PAGE_SIZE + 1);
@@ -135,7 +137,19 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   }
 
   const { data, error } = await query;
-  let rows = (data ?? []).filter((job) => !ignoredIds.has(job.id));
+
+  type MatchRow = {
+    job_id: string;
+    overall_score: number | null;
+    label: string | null;
+    user_id: string;
+  };
+  type JobRow = Omit<NonNullable<typeof data>[number], "user_job_matches"> & {
+    user_job_matches: MatchRow[];
+  };
+  let rows: JobRow[] = (data ?? [])
+    .filter((job) => !ignoredIds.has(job.id))
+    .map((job) => ({ ...job, user_job_matches: [] as MatchRow[] }));
 
   // Score any jobs on this page that are missing a match for the current user.
   await ensureScoresForJobs(
@@ -214,12 +228,24 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
           title="No jobs match these filters"
           description={
             activeFilters > 0
-              ? "Clear filters (All types · All scores · Any time) — your board has more roles than this narrow view."
-              : "Run npm run ingest or npm run ingest:watch to pull fresh postings."
+              ? "Try widening your filters. Your board has more roles than this narrow view."
+              : "New roles are added automatically. Check back soon."
+          }
+          action={
+            activeFilters > 0 ? (
+              <Button asChild size="sm" variant="outline">
+                <Link href="/jobs">Clear filters</Link>
+              </Button>
+            ) : undefined
           }
         />
       ) : (
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <>
+          <p className="mt-4 text-sm text-muted-foreground" role="status">
+            {page.length} {page.length === 1 ? "role" : "roles"}
+            {activeFilters > 0 ? " matching your filters" : ""} on this page
+          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
           {page.map((job) => {
             const match = asArray(job.user_job_matches).find((m) => m.user_id === userId);
             const sources = asArray(job.job_source_postings);
@@ -242,13 +268,14 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
               />
             );
           })}
-        </div>
+          </div>
+        </>
       )}
       {nextHref ? (
-        <div className="mt-6">
-          <Link href={nextHref as Route} className="text-sm font-medium text-accent">
-            Load more
-          </Link>
+        <div className="mt-6 flex justify-center">
+          <Button asChild variant="outline">
+            <Link href={nextHref as Route}>Load more roles</Link>
+          </Button>
         </div>
       ) : null}
     </div>

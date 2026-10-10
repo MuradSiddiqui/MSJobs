@@ -21,10 +21,10 @@ export default async function CvPage() {
     <div className="space-y-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-[30px] font-bold tracking-tight text-[#1e2a3a]">
+          <h1 className="font-display text-[30px] font-bold tracking-tight text-foreground">
             CV Studio
           </h1>
-          <p className="mt-1.5 text-[15px] text-[#667085]">
+          <p className="mt-1.5 text-[15px] text-muted-foreground">
             Upload once. MS Jobs keeps versions and tailors per job.
           </p>
         </div>
@@ -32,7 +32,7 @@ export default async function CvPage() {
           href="/samples/stelle-cv-sample.pdf"
           target="_blank"
           rel="noreferrer"
-          className="mt-1 text-sm font-medium text-[#0e7490] hover:underline"
+          className="mt-1 text-sm font-medium text-accent hover:underline"
         >
           View sample
         </a>

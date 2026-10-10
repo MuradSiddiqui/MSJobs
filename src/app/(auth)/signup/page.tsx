@@ -24,8 +24,8 @@ export default function SignupPage() {
         <>
           <AuthDivider />
           <p className="text-center text-sm">
-            <span className="text-[#667085]">Already registered?</span>{" "}
-            <Link href="/login" className="font-semibold text-[#0E7490] hover:underline">
+            <span className="text-muted-foreground">Already registered?</span>{" "}
+            <Link href="/login" className="font-semibold text-accent hover:underline">
               Log in
             </Link>
           </p>
@@ -42,7 +42,7 @@ export default function SignupPage() {
               type="text"
               autoComplete="given-name"
               required
-              className="h-11 rounded-[10px] border-[#E4E0D3] bg-white"
+              className="h-11 rounded-[10px] border-border bg-card"
             />
           </div>
           <div className="space-y-1.5">
@@ -53,7 +53,7 @@ export default function SignupPage() {
               type="text"
               autoComplete="family-name"
               required
-              className="h-11 rounded-[10px] border-[#E4E0D3] bg-white"
+              className="h-11 rounded-[10px] border-border bg-card"
             />
           </div>
         </div>
@@ -66,7 +66,7 @@ export default function SignupPage() {
             autoComplete="email"
             placeholder="you@example.com"
             required
-            className="h-11 rounded-[10px] border-[#E4E0D3] bg-white"
+            className="h-11 rounded-[10px] border-border bg-card"
           />
         </div>
         <div className="space-y-1.5">
@@ -79,14 +79,14 @@ export default function SignupPage() {
             minLength={8}
             placeholder="Min. 8 characters"
             required
-            className="h-11 rounded-[10px] border-[#E4E0D3] bg-white"
+            className="h-11 rounded-[10px] border-border bg-card"
           />
         </div>
         {state?.error ? <p className="text-sm text-danger">{state.error}</p> : null}
         <Button className="w-full" size="lg" type="submit">
           Create account
         </Button>
-        <p className="text-center text-xs text-[#98A2B3]">
+        <p className="text-center text-xs text-muted-foreground">
           Every account is reviewed by hand. No spam, ever.
         </p>
       </form>

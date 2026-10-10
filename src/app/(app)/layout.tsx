@@ -1,27 +1,16 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { isAdminEmail } from "@/lib/admin";
+import { getCachedSession } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 
 export default async function AppGroupLayout({ children }: { children: ReactNode }) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims?.sub;
-  const email = String(data?.claims?.email ?? "");
-  if (!userId) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("onboarding_completed_at, is_admin")
-    .eq("id", userId)
-    .maybeSingle();
+  const session = await getCachedSession();
+  if (!session) redirect("/login");
 
   // Admins skip onboarding entirely; it is meant for regular users.
-  const isAdmin = isAdminEmail(email) || profile?.is_admin === true;
-  if (!isAdmin && !profile?.onboarding_completed_at) {
+  if (!session.isAdmin && !session.onboardingCompletedAt) {
     redirect("/onboarding");
   }
 
-  return <AppShell email={email}>{children}</AppShell>;
+  return <AppShell email={session.email}>{children}</AppShell>;
 }

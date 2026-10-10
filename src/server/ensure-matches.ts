@@ -64,49 +64,58 @@ export async function ensureScoresForJobs(
   const missing = jobIds.filter((id) => !have.has(id));
   if (missing.length === 0) return;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("headline, years_of_experience, current_education, student_status, onboarding_completed_at")
-    .eq("id", userId)
-    .maybeSingle();
+  // These four queries are independent of each other; run them in parallel.
+  const [profileRes, prefRes, resumeRes, jobsRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("headline, years_of_experience, current_education, student_status, onboarding_completed_at")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("user_preferences")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase
+      .from("resumes")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .maybeSingle(),
+    supabase.from("jobs").select("*").in("id", missing),
+  ]);
+  const profile = profileRes.data;
+  const pref = prefRes.data;
+  const resume = resumeRes.data;
+  const jobs = jobsRes.data;
+
   if (!profile?.onboarding_completed_at) return;
-
-  const { data: pref } = await supabase
-    .from("user_preferences")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
   if (!pref) return;
-
-  // The CV text feeds the semantic part of the match score.
-  let experienceText = "";
-  const { data: resume } = await supabase
-    .from("resumes")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("is_active", true)
-    .maybeSingle();
-  if (resume) {
-    const { data: version } = await supabase
-      .from("resume_versions")
-      .select("extracted_text")
-      .eq("resume_id", resume.id)
-      .eq("parse_status", "succeeded")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    experienceText = version?.extracted_text ?? "";
-  }
-
-  const { data: jobs } = await supabase.from("jobs").select("*").in("id", missing);
   if (!jobs?.length) return;
 
+  // The CV text feeds the semantic part of the match score. The version
+  // lookup depends on the resume row, the company lookup depends on the
+  // jobs; the two are independent of each other, so run them in parallel.
   const companyIds = [...new Set(jobs.map((j) => j.company_id).filter(Boolean))] as string[];
+  const [versionRes, companiesRes] = await Promise.all([
+    resume
+      ? supabase
+          .from("resume_versions")
+          .select("extracted_text")
+          .eq("resume_id", resume.id)
+          .eq("parse_status", "succeeded")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null as { extracted_text: string | null } | null }),
+    companyIds.length > 0
+      ? supabase.from("companies").select("id, name").in("id", companyIds)
+      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+  ]);
+  const experienceText = versionRes.data?.extracted_text ?? "";
+
   const names = new Map<string, string>();
-  if (companyIds.length) {
-    const { data: companies } = await supabase.from("companies").select("id, name").in("id", companyIds);
-    for (const c of companies ?? []) names.set(c.id, c.name);
-  }
+  for (const c of companiesRes.data ?? []) names.set(c.id, c.name);
 
   const matchProfile: UserMatchProfile = {
     desiredRoles: pref.desired_roles,
