@@ -36,8 +36,10 @@ function applyCacheHeaders(response: NextResponse): NextResponse {
 }
 
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
+  // Plain renders must not carry no-store headers: they defeat the App
+  // Router client-side router cache and force a full server roundtrip on
+  // every navigation. Only auth redirects get no-store below.
   let response = NextResponse.next({ request });
-  applyCacheHeaders(response);
 
   const supabase = createServerClient(
     env().NEXT_PUBLIC_SUPABASE_URL,
