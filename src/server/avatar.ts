@@ -48,11 +48,18 @@ async function uploadAvatarInner(formData: FormData): Promise<AvatarUploadResult
     return { ok: false, error: "Image must be 5 MB or smaller." };
   }
 
-  const path = `${userId}/avatar.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const supabase = await createClient();
 
-  const { error: uploadError } = await supabase.storage.from("avatars").upload(path, buffer, {
+  // Use a unique filename per upload so browsers never serve a cached old
+  // photo, then remove any previous avatar files for this user.
+  const uniquePath = `${userId}/avatar-${Date.now()}.${ext}`;
+  const { data: existing } = await supabase.storage.from("avatars").list(userId);
+  const oldPaths = (existing ?? [])
+    .map((o) => `${userId}/${o.name}`)
+    .filter((p) => p !== uniquePath);
+
+  const { error: uploadError } = await supabase.storage.from("avatars").upload(uniquePath, buffer, {
     contentType: file.type,
     upsert: true,
   });
@@ -60,7 +67,11 @@ async function uploadAvatarInner(formData: FormData): Promise<AvatarUploadResult
     return { ok: false, error: uploadError.message };
   }
 
-  const avatarUrl = `${env().NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${path}`;
+  if (oldPaths.length > 0) {
+    await supabase.storage.from("avatars").remove(oldPaths);
+  }
+
+  const avatarUrl = `${env().NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${uniquePath}`;
 
   const { error: updateError } = await supabase
     .from("profiles")

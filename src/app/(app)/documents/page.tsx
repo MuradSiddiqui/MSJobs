@@ -5,6 +5,7 @@ import { Download, FileText, Trash2, Upload, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
 import { Card, Badge } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Switch } from "@/components/settings/switch";
 import {
   DOCUMENT_TYPES,
@@ -45,6 +46,7 @@ export default function DocumentsPage() {
   const [docType, setDocType] = useState<string>("other");
   const [error, setError] = useState<string | null>(null);
   const [busyIds, setBusyIds] = useState<Record<string, boolean>>({});
+  const [confirmDeleteDoc, setConfirmDeleteDoc] = useState<UserDocument | null>(null);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -140,7 +142,7 @@ export default function DocumentsPage() {
   }
 
   async function handleDelete(doc: UserDocument) {
-    if (!window.confirm(`Delete "${doc.file_name}"? This cannot be undone.`)) return;
+    setConfirmDeleteDoc(null);
     setBusyIds((prev) => ({ ...prev, [doc.id]: true }));
     try {
       const result = await deleteDocumentAction(doc.id);
@@ -300,7 +302,7 @@ export default function DocumentsPage() {
                       aria-label={`Delete ${doc.file_name}`}
                       title="Delete"
                       disabled={busy}
-                      onClick={() => void handleDelete(doc)}
+                      onClick={() => setConfirmDeleteDoc(doc)}
                       className="text-danger hover:text-danger"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -312,6 +314,15 @@ export default function DocumentsPage() {
           </ul>
         )}
       </div>
+      <ConfirmDialog
+        open={confirmDeleteDoc !== null}
+        title={confirmDeleteDoc ? `Delete "${confirmDeleteDoc.file_name}"?` : ""}
+        description="The file will be removed from storage. This cannot be undone."
+        confirmLabel="Delete"
+        busy={confirmDeleteDoc ? Boolean(busyIds[confirmDeleteDoc.id]) : false}
+        onConfirm={() => confirmDeleteDoc && void handleDelete(confirmDeleteDoc)}
+        onCancel={() => setConfirmDeleteDoc(null)}
+      />
     </div>
   );
 }

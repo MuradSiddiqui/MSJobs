@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { RequestChangesCard } from "./editor";
 import { CvDocument } from "./cv-document";
 import { VersionsCard } from "./versions-card";
@@ -24,6 +25,7 @@ export type CvVersion = {
 type Tab = "preview" | "original";
 
 function RetryParseButton({ versionId }: { versionId: string }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +36,9 @@ function RetryParseButton({ versionId }: { versionId: string }) {
       await retryResumeParseAction(versionId);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Retry failed. Try again.");
+    } finally {
       setBusy(false);
+      router.refresh();
     }
   }
 

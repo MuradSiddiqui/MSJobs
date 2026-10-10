@@ -6,6 +6,7 @@ import { Camera } from "lucide-react";
 import { deleteAvatarAction, uploadAvatarAction } from "@/server/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type ProfileCardProps = {
   fullName: string | null;
@@ -19,6 +20,7 @@ export function ProfileCard({ fullName, email, avatarUrl }: ProfileCardProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   const name = fullName?.trim() || "Your profile";
   const initial = (fullName?.trim() || email).charAt(0).toUpperCase() || "?";
@@ -55,7 +57,7 @@ export function ProfileCard({ fullName, email, avatarUrl }: ProfileCardProps) {
 
   async function handleRemove() {
     if (busy) return;
-    if (!window.confirm("Remove your profile photo?")) return;
+    setConfirmRemove(false);
     setBusy(true);
     setError(null);
     try {
@@ -122,7 +124,7 @@ export function ProfileCard({ fullName, email, avatarUrl }: ProfileCardProps) {
               variant="ghost"
               size="sm"
               disabled={busy}
-              onClick={() => void handleRemove()}
+              onClick={() => setConfirmRemove(true)}
               className="text-muted-foreground hover:text-danger"
             >
               Remove
@@ -132,6 +134,15 @@ export function ProfileCard({ fullName, email, avatarUrl }: ProfileCardProps) {
       </div>
       <p className="mt-3 text-xs text-muted-foreground">JPEG, PNG, or WebP. Max 5 MB.</p>
       {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
+      <ConfirmDialog
+        open={confirmRemove}
+        title="Remove profile photo?"
+        description="Your photo will be deleted. You can upload a new one anytime."
+        confirmLabel="Remove"
+        busy={busy}
+        onConfirm={() => void handleRemove()}
+        onCancel={() => setConfirmRemove(false)}
+      />
     </Card>
   );
 }

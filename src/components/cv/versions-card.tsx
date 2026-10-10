@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FileText, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { deleteResumeVersionAction } from "@/server/cv";
 import type { CvVersion } from "./studio";
@@ -28,14 +29,19 @@ export function VersionsCard({
   const numbered = [...versions].reverse().map((v, i) => ({ ...v, number: i + 1 }));
   const latestId = numbered.length > 0 ? numbered[numbered.length - 1]?.id : undefined;
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; number: number } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  async function handleDelete(id: string, number: number) {
-    if (!window.confirm(`Delete v${number}? This cannot be undone.`)) return;
+  async function handleDelete() {
+    if (!confirmDelete) return;
+    const { id } = confirmDelete;
+    setConfirmDelete(null);
     setDeletingId(id);
+    setDeleteError(null);
     const result = await deleteResumeVersionAction(id);
     setDeletingId(null);
     if (!result.ok) {
-      window.alert(result.error ?? "Could not delete the version.");
+      setDeleteError(result.error ?? "Could not delete the version.");
     }
   }
 
@@ -76,7 +82,7 @@ export function VersionsCard({
               aria-label={`Delete v${v.number}`}
               title={`Delete v${v.number}`}
               disabled={deletingId === v.id}
-              onClick={() => void handleDelete(v.id, v.number)}
+              onClick={() => setConfirmDelete({ id: v.id, number: v.number })}
               className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#667085] transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-50"
             >
               <Trash2 className="size-4" aria-hidden />
@@ -84,6 +90,20 @@ export function VersionsCard({
           </li>
         ))}
       </ul>
+      {deleteError ? (
+        <p className="mt-2 text-sm text-danger" role="alert">
+          {deleteError}
+        </p>
+      ) : null}
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title={confirmDelete ? `Delete v${confirmDelete.number}?` : ""}
+        description="The file will be removed from storage. This cannot be undone."
+        confirmLabel="Delete"
+        busy={deletingId !== null}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Card>
   );
 }

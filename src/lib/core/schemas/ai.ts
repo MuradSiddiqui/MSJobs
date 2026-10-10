@@ -68,25 +68,21 @@ export const ResumeParseSchema = z.strictObject({
     }),
   ),
   certifications: z.array(z.string()),
-  achievements: z
-    .array(
-      z.strictObject({
-        title: z.string(),
-        organization: z.string().nullable(),
-        date: z.string().nullable(),
-        location: z.string().nullable(),
-        bullets: z.array(z.string()),
-      }),
-    )
-    .default([]),
-  technicalStrengths: z
-    .array(
-      z.strictObject({
-        category: z.string(),
-        items: z.string(),
-      }),
-    )
-    .default([]),
+  achievements: z.array(
+    z.strictObject({
+      title: z.string(),
+      organization: z.string().nullable(),
+      date: z.string().nullable(),
+      location: z.string().nullable(),
+      bullets: z.array(z.string()),
+    }),
+  ),
+  technicalStrengths: z.array(
+    z.strictObject({
+      category: z.string(),
+      items: z.string(),
+    }),
+  ),
   spokenLanguages: z.array(
     z.strictObject({
       language: z.string(),
@@ -102,7 +98,7 @@ export const ResumeParseSchema = z.strictObject({
       endDate: z.string().nullable(),
       location: z.string().nullable(),
       skills: z.array(z.string()),
-      bullets: z.array(z.string()).default([]),
+      bullets: z.array(z.string()),
     }),
   ),
 });
