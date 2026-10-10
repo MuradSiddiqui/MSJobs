@@ -41,7 +41,7 @@ export function DownloadCvButton({
         size="lg"
         disabled={pending}
         onClick={download}
-        className="w-full bg-[#0e7490] hover:bg-[#155e75]"
+        className="w-full bg-accent hover:bg-accent/90"
       >
         <Download className="size-4" aria-hidden />
         {pending ? "Preparing..." : "Download CV"}
@@ -51,7 +51,7 @@ export function DownloadCvButton({
           {error}
         </p>
       ) : null}
-      <p className="mt-2 text-center text-xs text-[#667085]">
+      <p className="mt-2 text-center text-xs text-muted-foreground">
         Tailored application PDFs are generated per job.
       </p>
     </div>

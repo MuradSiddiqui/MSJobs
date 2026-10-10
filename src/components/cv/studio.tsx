@@ -75,13 +75,13 @@ export function CvStudio({ versions }: { versions: CvVersion[] }) {
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-[#1e2a3a]">
-            Preview <span className="font-normal text-[#667085]">· v{versionNumber}</span>
+          <p className="text-sm font-semibold text-foreground">
+            Preview <span className="font-normal text-muted-foreground">· v{versionNumber}</span>
           </p>
           <div
             role="tablist"
             aria-label="CV view"
-            className="flex rounded-lg border border-[#e4e0d3] bg-white p-0.5 text-[13px]"
+            className="flex rounded-lg border border-border bg-card p-0.5 text-[13px]"
           >
             {(["preview", "original"] as Tab[]).map((t) => (
               <button
@@ -93,8 +93,8 @@ export function CvStudio({ versions }: { versions: CvVersion[] }) {
                 className={cn(
                   "rounded-md px-3 py-1.5 font-medium transition-colors",
                   tab === t
-                    ? "bg-[#0e7490] text-white"
-                    : "text-[#667085] hover:text-[#1e2a3a]",
+                    ? "bg-accent text-white"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {t === "preview" ? "Preview" : "Original file"}
@@ -119,10 +119,10 @@ export function CvStudio({ versions }: { versions: CvVersion[] }) {
             </div>
           ) : (
             <div
-              className="flex h-64 items-center justify-center rounded-xl border border-[#e4e0d3] bg-white"
+              className="flex h-64 items-center justify-center rounded-xl border border-border bg-card"
               aria-busy="true"
             >
-              <p className="text-sm text-[#667085]">Extracting your CV...</p>
+              <p className="text-sm text-muted-foreground">Extracting your CV...</p>
             </div>
           )
         ) : selected ? (

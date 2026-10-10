@@ -47,7 +47,7 @@ function FormatBadges() {
       {FORMATS.map((f) => (
         <span
           key={f}
-          className="rounded-lg border-[1.5px] border-[#155e75] bg-white px-2.5 py-1.5 text-xs font-bold tracking-[0.5px] text-[#155e75] shadow-[3px_3px_0px_0px_#1c293b]"
+          className="rounded-lg border-[1.5px] border-accent bg-card px-2.5 py-1.5 text-xs font-bold tracking-[0.5px] text-accent shadow-[3px_3px_0px_0px_var(--accent)]"
         >
           {f}
         </span>
@@ -82,11 +82,11 @@ export function UploadZone() {
           upload(e.dataTransfer.files?.[0]);
         }}
         className={`flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-[20px] border-2 border-dashed px-11 py-11 text-center transition-colors ${
-          dragging ? "border-[#155e75] bg-[#0e7490]/5" : "border-[#0e7490] bg-white"
+          dragging ? "border-accent bg-accent/5" : "border-accent bg-card"
         }`}
       >
-        <CloudUpload className="size-16 text-[#0e7490]" strokeWidth={1.25} aria-hidden />
-        <p className="text-lg font-semibold text-[#1e2a3a]">
+        <CloudUpload className="size-16 text-accent" strokeWidth={1.25} aria-hidden />
+        <p className="text-lg font-semibold text-foreground">
           {pending ? "Uploading your CV..." : "Drag and drop your CV here"}
         </p>
         <Button
@@ -102,7 +102,7 @@ export function UploadZone() {
           Choose file
         </Button>
         <FormatBadges />
-        <p className="text-xs text-[#667085]">Max 30 MB. Files stay private.</p>
+        <p className="text-xs text-muted-foreground">Max 30 MB. Files stay private.</p>
         <input
           ref={inputRef}
           type="file"
@@ -120,7 +120,7 @@ export function UploadZone() {
         </p>
       ) : null}
       {success && !pending ? (
-        <p className="mt-2 text-sm font-medium text-[#0e7490]" role="status">
+        <p className="mt-2 text-sm font-medium text-accent" role="status">
           {success}
         </p>
       ) : null}
@@ -134,21 +134,21 @@ export function EmptyCvState() {
 
   return (
     <Card className="flex flex-col items-center gap-4 border-dashed px-6 py-16 text-center">
-      <span className="flex size-16 items-center justify-center rounded-full bg-[#0e7490]/10">
-        <CloudUpload className="size-8 text-[#0e7490]" strokeWidth={1.5} aria-hidden />
+      <span className="flex size-16 items-center justify-center rounded-full bg-accent/10">
+        <CloudUpload className="size-8 text-accent" strokeWidth={1.5} aria-hidden />
       </span>
       <div>
-        <p className="font-display text-xl font-semibold tracking-tight text-[#1e2a3a]">
+        <p className="font-display text-xl font-semibold tracking-tight text-foreground">
           Please upload your CV first
         </p>
-        <p className="mt-1.5 text-sm text-[#667085]">
+        <p className="mt-1.5 text-sm text-muted-foreground">
           PDF, DOCX or PNG, max 30 MB. MS Jobs extracts a structured profile and keeps every version.
         </p>
       </div>
       <Button
         type="button"
         disabled={pending}
-        className="bg-[#0e7490] hover:bg-[#155e75]"
+        className="bg-accent hover:bg-accent/90"
         onClick={() => inputRef.current?.click()}
       >
         <FileUp className="size-4" aria-hidden />
@@ -170,7 +170,7 @@ export function EmptyCvState() {
         </p>
       ) : null}
       {success && !pending ? (
-        <p className="text-sm font-medium text-[#0e7490]" role="status">
+        <p className="text-sm font-medium text-accent" role="status">
           {success}
         </p>
       ) : null}
