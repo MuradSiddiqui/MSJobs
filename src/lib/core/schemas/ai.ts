@@ -31,8 +31,10 @@ export const ResumeExperienceSchema = z.strictObject({
   role: z.string(),
   startDate: z.string().nullable(),
   endDate: z.string().nullable(),
-  location: z.string().nullable().optional(),
-  employmentType: z.string().nullable().optional(),
+  // Groq strict structured output rejects optional properties: every key
+  // must be listed in `required`, so missing values are null, not absent.
+  location: z.string().nullable(),
+  employmentType: z.string().nullable(),
   responsibilities: z.array(z.string()),
   achievements: z.array(z.string()),
 });
@@ -42,11 +44,11 @@ export const ResumeParseSchema = z.strictObject({
   headline: z.string().nullable(),
   summary: z.string().nullable(),
   location: z.string().nullable(),
-  email: z.string().nullable().optional(),
-  phone: z.string().nullable().optional(),
-  linkedin: z.string().nullable().optional(),
-  website: z.string().nullable().optional(),
-  github: z.string().nullable().optional(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  linkedin: z.string().nullable(),
+  website: z.string().nullable(),
+  github: z.string().nullable(),
   workExperience: z.array(ResumeExperienceSchema),
   skills: z.array(z.string()),
   programmingLanguages: z.array(z.string()),
@@ -61,8 +63,8 @@ export const ResumeParseSchema = z.strictObject({
       field: z.string().nullable(),
       startDate: z.string().nullable(),
       endDate: z.string().nullable(),
-      location: z.string().nullable().optional(),
-      notes: z.string().nullable().optional(),
+      location: z.string().nullable(),
+      notes: z.string().nullable(),
     }),
   ),
   certifications: z.array(z.string()),
@@ -76,7 +78,6 @@ export const ResumeParseSchema = z.strictObject({
         bullets: z.array(z.string()),
       }),
     )
-    .optional()
     .default([]),
   technicalStrengths: z
     .array(
@@ -85,7 +86,6 @@ export const ResumeParseSchema = z.strictObject({
         items: z.string(),
       }),
     )
-    .optional()
     .default([]),
   spokenLanguages: z.array(
     z.strictObject({
@@ -97,12 +97,12 @@ export const ResumeParseSchema = z.strictObject({
     z.strictObject({
       name: z.string(),
       description: z.string().nullable(),
-      role: z.string().nullable().optional(),
-      startDate: z.string().nullable().optional(),
-      endDate: z.string().nullable().optional(),
-      location: z.string().nullable().optional(),
+      role: z.string().nullable(),
+      startDate: z.string().nullable(),
+      endDate: z.string().nullable(),
+      location: z.string().nullable(),
       skills: z.array(z.string()),
-      bullets: z.array(z.string()).optional().default([]),
+      bullets: z.array(z.string()).default([]),
     }),
   ),
 });
