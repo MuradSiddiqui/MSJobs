@@ -54,23 +54,26 @@ export function OnboardingWizard() {
     fd.set("headline", state.headline.trim());
     if (state.studentStatus) fd.set("student_status", "on");
     if (state.relocationOk) fd.set("relocation_ok", "on");
-    startTransition(() => {
-      completeOnboarding(fd);
+    startTransition(async () => {
+      const result = await completeOnboarding(fd);
+      if (result && !result.ok) {
+        setError(result.error ?? "Could not save your profile. Please try again.");
+      }
     });
   };
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      <h1 className="font-display text-3xl font-bold text-[#1E2A3A]">Let&apos;s set you up</h1>
+      <h1 className="font-display text-3xl font-bold text-foreground">Let&apos;s set you up</h1>
       <div className="mt-4">
         <div className="flex items-center justify-between">
-          <p className="text-[13px] font-medium text-[#667085]">
+          <p className="text-[13px] font-medium text-muted-foreground">
             Step {step + 1} of {TOTAL_STEPS}
           </p>
-          <p className="text-[13px] font-semibold text-[#0E7490]">{percent}%</p>
+          <p className="text-[13px] font-semibold text-accent">{percent}%</p>
         </div>
         <div
-          className="mt-2 h-2 w-full rounded-full bg-[#E4E0D3]"
+          className="mt-2 h-2 w-full rounded-full bg-border"
           role="progressbar"
           aria-valuenow={percent}
           aria-valuemin={0}
@@ -78,21 +81,21 @@ export function OnboardingWizard() {
           aria-label={`Step ${step + 1} of ${TOTAL_STEPS}`}
         >
           <div
-            className="h-2 rounded-full bg-[#0E7490] transition-all duration-300"
+            className="h-2 rounded-full bg-accent transition-all duration-300"
             style={{ width: `${percent}%` }}
           />
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="mt-7 rounded-[20px] bg-white p-6 shadow-[0px_8px_24px_0px_rgba(28,41,59,0.1)] sm:p-9">
+        <div className="mt-7 rounded-[20px] bg-card p-6 shadow-[0px_8px_24px_0px_rgba(28,41,59,0.1)] sm:p-9">
           {step === 0 && <StepRoles state={state} onChange={patch} />}
           {step === 1 && <StepLocation state={state} onChange={patch} />}
           {step === 2 && <StepEdge state={state} onChange={patch} />}
           {step === 3 && <StepReview state={state} onChange={patch} />}
 
           {error && (
-            <p role="alert" className="mt-4 text-sm font-medium text-[#B42318]">
+            <p role="alert" className="mt-4 text-sm font-medium text-danger">
               {error}
             </p>
           )}
@@ -121,12 +124,12 @@ export function OnboardingWizard() {
                     setError(null);
                     setStep((s) => s + 1);
                   }}
-                  className="bg-[#0E7490] hover:bg-[#155E75]"
+                  className="bg-accent hover:bg-accent/90"
                 >
                   Continue
                 </Button>
                 {continueHint && (
-                  <p className="text-xs text-[#667085]">{continueHint}</p>
+                  <p className="text-xs text-muted-foreground">{continueHint}</p>
                 )}
               </div>
             ) : (
@@ -135,11 +138,11 @@ export function OnboardingWizard() {
                   type="submit"
                   size="lg"
                   disabled={pending}
-                  className="bg-[#0E7490] hover:bg-[#155E75]"
+                  className="bg-accent hover:bg-accent/90"
                 >
                   {pending ? "Starting..." : "Start matchmaking"}
                 </Button>
-                <p className="text-xs text-[#667085]">You can change everything later in Profile.</p>
+                <p className="text-xs text-muted-foreground">You can change everything later in Profile.</p>
               </div>
             )}
           </div>

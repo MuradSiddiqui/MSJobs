@@ -34,12 +34,12 @@ function StepShell({
   return (
     <div>
       <div className="flex items-center gap-3">
-        <div className="flex size-9 items-center justify-center rounded-full bg-[#0E7490]">
+        <div className="flex size-9 items-center justify-center rounded-full bg-accent">
           <span className="text-[15px] font-bold text-white">{number}</span>
         </div>
         <div>
-          <h2 className="font-display text-xl font-semibold text-[#1E2A3A]">{title}</h2>
-          <p className="text-[13px] text-[#667085]">{subtitle}</p>
+          <h2 className="font-display text-xl font-semibold text-foreground">{title}</h2>
+          <p className="text-[13px] text-muted-foreground">{subtitle}</p>
         </div>
       </div>
       <div className="mt-6 space-y-6">{children}</div>
@@ -48,7 +48,7 @@ function StepShell({
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2.5 text-[13px] font-medium text-[#667085]">{children}</p>;
+  return <p className="mb-2.5 text-[13px] font-medium text-muted-foreground">{children}</p>;
 }
 
 export function StepRoles({
@@ -124,19 +124,19 @@ export function StepLocation({
                 onClick={() => onChange({ workStyles: toggleIn(state.workStyles, w.value) })}
                 className={
                   selected
-                    ? "rounded-2xl border-2 border-[#0E7490] bg-[#0E7490]/5 p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7490]/40"
-                    : "rounded-2xl border-2 border-[#E4E0D3] bg-white p-4 text-left transition-colors hover:border-[#0E7490]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7490]/40"
+                    ? "rounded-2xl border-2 border-accent bg-accent/5 p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    : "rounded-2xl border-2 border-border bg-card p-4 text-left transition-colors hover:border-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 }
               >
-                <span className="block text-sm font-semibold text-[#1E2A3A]">{w.label}</span>
-                <span className="mt-1 block text-xs text-[#667085]">{w.description}</span>
+                <span className="block text-sm font-semibold text-foreground">{w.label}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">{w.description}</span>
               </button>
             );
           })}
         </div>
       </div>
       <div>
-        <Label htmlFor="preferred_cities" className="mb-2.5 block text-[13px] font-medium text-[#667085]">
+        <Label htmlFor="preferred_cities" className="mb-2.5 block text-[13px] font-medium text-muted-foreground">
           Preferred cities
         </Label>
         <Input
@@ -144,7 +144,7 @@ export function StepLocation({
           value={state.cities}
           onChange={(e) => onChange({ cities: e.target.value })}
           placeholder="e.g. Berlin, Munich, Hamburg"
-          className="border-[#E4E0D3] bg-white"
+          className="border-border bg-card"
         />
         <div className="mt-2.5 flex flex-wrap gap-2">
           {CITY_EXAMPLES.map((city) => (
@@ -152,13 +152,13 @@ export function StepLocation({
               key={city}
               type="button"
               onClick={() => addExampleCity(city)}
-              className="rounded-full border border-dashed border-[#E4E0D3] px-3 py-1 text-xs font-medium text-[#667085] transition-colors hover:border-[#0E7490] hover:text-[#0E7490]"
+              className="rounded-full border border-dashed border-border px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-accent hover:text-accent"
             >
               + {city}
             </button>
           ))}
         </div>
-        <p className="mt-2 text-xs text-[#667085]">Separate multiple cities with commas.</p>
+        <p className="mt-2 text-xs text-muted-foreground">Separate multiple cities with commas.</p>
       </div>
     </StepShell>
   );
@@ -209,13 +209,13 @@ export function StepEdge({
             }}
             placeholder="e.g. GraphQL"
             aria-label="Add a custom skill"
-            className="border-[#E4E0D3] bg-white"
+            className="border-border bg-card"
           />
           <button
             type="button"
             onClick={addCustomSkill}
             disabled={!customSkill.trim()}
-            className="shrink-0 rounded-lg bg-[#0E7490] px-4 text-sm font-medium text-white transition-colors hover:bg-[#155E75] disabled:opacity-40"
+            className="shrink-0 rounded-lg bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-40"
           >
             Add
           </button>
@@ -225,14 +225,14 @@ export function StepEdge({
             {customSkills.map((skill) => (
               <span
                 key={skill}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#0E7490]/10 px-3 py-1.5 text-xs font-medium text-[#155E75]"
+                className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent"
               >
                 {skill}
                 <button
                   type="button"
                   aria-label={`Remove ${skill}`}
                   onClick={() => onChange({ skills: state.skills.filter((s) => s !== skill) })}
-                  className="text-[#0E7490] hover:text-[#155E75]"
+                  className="text-accent hover:text-accent"
                 >
                   x
                 </button>
@@ -242,7 +242,7 @@ export function StepEdge({
         )}
       </div>
       <div>
-        <Label className="mb-2.5 block text-[13px] font-medium text-[#667085]">
+        <Label className="mb-2.5 block text-[13px] font-medium text-muted-foreground">
           Years of experience
         </Label>
         <YearsStepper
@@ -251,7 +251,7 @@ export function StepEdge({
         />
       </div>
       <div>
-        <Label htmlFor="headline" className="mb-2.5 block text-[13px] font-medium text-[#667085]">
+        <Label htmlFor="headline" className="mb-2.5 block text-[13px] font-medium text-muted-foreground">
           Headline
         </Label>
         <Input
@@ -259,9 +259,9 @@ export function StepEdge({
           value={state.headline}
           onChange={(e) => onChange({ headline: e.target.value })}
           placeholder="Frontend engineer, React and TypeScript"
-          className="border-[#E4E0D3] bg-white"
+          className="border-border bg-card"
         />
-        <p className="mt-2 text-xs text-[#667085]">
+        <p className="mt-2 text-xs text-muted-foreground">
           One line recruiters see first. Example: Frontend engineer, React and TypeScript
         </p>
       </div>
@@ -277,18 +277,18 @@ export function StepReview({
   onChange: (patch: Partial<WizardState>) => void;
 }) {
   const row = (label: string, content: React.ReactNode) => (
-    <div className="flex flex-col gap-1.5 border-b border-[#E4E0D3] py-3.5 last:border-b-0 sm:flex-row sm:items-start sm:gap-6">
-      <span className="w-36 shrink-0 text-[13px] font-medium text-[#667085]">{label}</span>
-      <span className="text-sm text-[#1E2A3A]">{content}</span>
+    <div className="flex flex-col gap-1.5 border-b border-border py-3.5 last:border-b-0 sm:flex-row sm:items-start sm:gap-6">
+      <span className="w-36 shrink-0 text-[13px] font-medium text-muted-foreground">{label}</span>
+      <span className="text-sm text-foreground">{content}</span>
     </div>
   );
-  const notSet = <span className="text-[#667085]">Not set</span>;
+  const notSet = <span className="text-muted-foreground">Not set</span>;
   const yearsLabel =
     state.yearsOfExperience === 1 ? "1 year" : `${Number.isInteger(state.yearsOfExperience) ? state.yearsOfExperience : state.yearsOfExperience.toFixed(1)} years`;
 
   return (
     <StepShell number={4} title="Almost done" subtitle="Review your picks and start matching.">
-      <div className="rounded-2xl border border-[#E4E0D3] bg-[#F7F5EF] px-5 py-2">
+      <div className="rounded-2xl border border-border bg-muted px-5 py-2">
         {row("Roles", state.roles.length > 0 ? state.roles.join(", ") : notSet)}
         {row(
           "Employment type",

@@ -24,7 +24,7 @@ export function YearsStepper({
       >
         <span aria-hidden className="text-lg leading-none">-</span>
       </Button>
-      <span className="w-14 text-center text-lg font-semibold text-[#1E2A3A]" aria-live="polite">
+      <span className="w-14 text-center text-lg font-semibold text-foreground" aria-live="polite">
         {label}
       </span>
       <Button
@@ -37,7 +37,7 @@ export function YearsStepper({
       >
         <span aria-hidden className="text-lg leading-none">+</span>
       </Button>
-      <span className="text-sm text-[#667085]">years</span>
+      <span className="text-sm text-muted-foreground">years</span>
     </div>
   );
 }
