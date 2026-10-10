@@ -13,6 +13,7 @@ function useResumeUpload() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   function upload(file: File | null | undefined) {
     if (!file) return;
@@ -21,11 +22,13 @@ function useResumeUpload() {
       return;
     }
     setError(null);
+    setSuccess(null);
     const formData = new FormData();
     formData.append("file", file);
     startTransition(async () => {
       const result = await uploadResumeAction(formData);
       if (result.ok) {
+        setSuccess("CV uploaded successfully. Extracting your profile...");
         router.refresh();
       } else {
         setError(result.error ?? "Upload failed.");
@@ -33,7 +36,7 @@ function useResumeUpload() {
     });
   }
 
-  return { upload, pending, error };
+  return { upload, pending, error, success };
 }
 
 const FORMATS = ["PDF", "DOCX", "PNG"];
@@ -56,7 +59,7 @@ function FormatBadges() {
 export function UploadZone() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
-  const { upload, pending, error } = useResumeUpload();
+  const { upload, pending, error, success } = useResumeUpload();
 
   return (
     <div>
@@ -116,13 +119,18 @@ export function UploadZone() {
           {error}
         </p>
       ) : null}
+      {success && !pending ? (
+        <p className="mt-2 text-sm font-medium text-[#0e7490]" role="status">
+          {success}
+        </p>
+      ) : null}
     </div>
   );
 }
 
 export function EmptyCvState() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { upload, pending, error } = useResumeUpload();
+  const { upload, pending, error, success } = useResumeUpload();
 
   return (
     <Card className="flex flex-col items-center gap-4 border-dashed px-6 py-16 text-center">
@@ -159,6 +167,11 @@ export function EmptyCvState() {
       {error ? (
         <p className="text-sm text-danger" role="alert">
           {error}
+        </p>
+      ) : null}
+      {success && !pending ? (
+        <p className="text-sm font-medium text-[#0e7490]" role="status">
+          {success}
         </p>
       ) : null}
     </Card>

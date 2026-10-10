@@ -287,3 +287,38 @@ export async function retryResumeParseAction(versionId: string): Promise<void> {
 
   revalidatePath("/cv");
 }
+
+/**
+ * Deletes one CV version (file from storage + table row) after verifying the
+ * session user owns it. Deleting every version leaves the resume without a
+ * usable CV, which the Jobs page treats as "no CV uploaded".
+ */
+export async function deleteResumeVersionAction(
+  versionId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub as string | undefined;
+  if (!userId) return { ok: false, error: "You are not signed in." };
+
+  const { data: version } = await supabase
+    .from("resume_versions")
+    .select("id, storage_path")
+    .eq("id", versionId)
+    .eq("user_id", userId)
+    .single();
+  if (!version) return { ok: false, error: "Version not found." };
+
+  if (version.storage_path) {
+    await supabase.storage.from("resumes").remove([version.storage_path]);
+  }
+  const { error: deleteError } = await supabase
+    .from("resume_versions")
+    .delete()
+    .eq("id", version.id)
+    .eq("user_id", userId);
+  if (deleteError) return { ok: false, error: deleteError.message };
+
+  revalidatePath("/cv");
+  return { ok: true };
+}

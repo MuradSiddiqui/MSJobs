@@ -72,3 +72,37 @@ async function uploadAvatarInner(formData: FormData): Promise<AvatarUploadResult
 
   return { ok: true, avatarUrl };
 }
+
+/**
+ * Removes the profile photo: deletes every avatar object for the user from
+ * the `avatars` bucket and clears `profiles.avatar_url`.
+ */
+export async function deleteAvatarAction(): Promise<AvatarUploadResult> {
+  try {
+    const userId = await getAuthUserId();
+    if (!userId) {
+      return { ok: false, error: "Not signed in." };
+    }
+    const supabase = await createClient();
+
+    const { data: objects } = await supabase.storage.from("avatars").list(userId);
+    const paths = (objects ?? []).map((o) => `${userId}/${o.name}`);
+    if (paths.length > 0) {
+      const { error: removeError } = await supabase.storage.from("avatars").remove(paths);
+      if (removeError) {
+        return { ok: false, error: removeError.message };
+      }
+    }
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ avatar_url: null })
+      .eq("id", userId);
+    if (updateError) {
+      return { ok: false, error: updateError.message };
+    }
+    return { ok: true, avatarUrl: "" };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Could not remove the photo." };
+  }
+}
