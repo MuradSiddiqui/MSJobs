@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera } from "lucide-react";
-import { uploadAvatarAction } from "@/server/avatar";
+import { deleteAvatarAction, uploadAvatarAction } from "@/server/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -23,6 +23,7 @@ export function ProfileCard({ fullName, email, avatarUrl }: ProfileCardProps) {
   const name = fullName?.trim() || "Your profile";
   const initial = (fullName?.trim() || email).charAt(0).toUpperCase() || "?";
   const src = preview ?? avatarUrl;
+  const hasPhoto = Boolean(src);
 
   async function handleFile(file: File | undefined) {
     if (!file || busy) return;
@@ -47,6 +48,26 @@ export function ProfileCard({ fullName, email, avatarUrl }: ProfileCardProps) {
       URL.revokeObjectURL(objectUrl);
       setPreview(null);
       setError(e instanceof Error ? e.message : "Upload failed. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRemove() {
+    if (busy) return;
+    if (!window.confirm("Remove your profile photo?")) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await deleteAvatarAction();
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setPreview(null);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not remove the photo.");
     } finally {
       setBusy(false);
     }
@@ -87,14 +108,27 @@ export function ProfileCard({ fullName, email, avatarUrl }: ProfileCardProps) {
           <h2 className="truncate text-base font-semibold text-foreground">{name}</h2>
           <p className="truncate text-sm text-muted-foreground">{email}</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? "Uploading..." : "Upload photo"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => inputRef.current?.click()}
+          >
+            {busy ? "Uploading..." : hasPhoto ? "Change photo" : "Upload photo"}
+          </Button>
+          {hasPhoto ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={() => void handleRemove()}
+              className="text-muted-foreground hover:text-danger"
+            >
+              Remove
+            </Button>
+          ) : null}
+        </div>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">JPEG, PNG, or WebP. Max 5 MB.</p>
       {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
