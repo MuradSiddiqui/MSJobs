@@ -7,12 +7,19 @@ const base: ResumeParseResult = {
   headline: "Full-stack developer",
   summary: "Master's student with experience building React apps.",
   location: "Frankfurt",
+  email: null,
+  phone: null,
+  linkedin: null,
+  website: null,
+  github: null,
   workExperience: [
     {
       company: "Acme",
       role: "Intern",
       startDate: "2024",
       endDate: null,
+      location: null,
+      employmentType: null,
       responsibilities: [
         "Delivered reusable and maintainable UI components that improved design consistency.",
       ],
