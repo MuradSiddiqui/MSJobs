@@ -49,26 +49,37 @@ export default function DocumentsPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
-    const result = await listDocumentsAction();
-    setLoading(false);
-    if (!result.ok) {
-      setError(result.error ?? "Could not load documents.");
-      return;
-    }
-    setDocuments(result.documents);
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    async function load() {
+    try {
       const result = await listDocumentsAction();
-      if (!active) return;
       setLoading(false);
       if (!result.ok) {
         setError(result.error ?? "Could not load documents.");
         return;
       }
       setDocuments(result.documents);
+    } catch (e) {
+      setLoading(false);
+      setError(e instanceof Error ? e.message : "Could not load documents.");
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const result = await listDocumentsAction();
+        if (!active) return;
+        setLoading(false);
+        if (!result.ok) {
+          setError(result.error ?? "Could not load documents.");
+          return;
+        }
+        setDocuments(result.documents);
+      } catch (e) {
+        if (!active) return;
+        setLoading(false);
+        setError(e instanceof Error ? e.message : "Could not load documents.");
+      }
     }
     void load();
     return () => {
@@ -81,14 +92,18 @@ export default function DocumentsPage() {
     if (list.length === 0) return;
     setError(null);
     setUploading((n) => n + list.length);
-    for (const file of list) {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("doc_type", docType);
-      const result = await uploadDocumentAction(form);
-      if (!result.ok) {
-        setError(result.error ?? `Could not upload ${file.name}.`);
+    try {
+      for (const file of list) {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("doc_type", docType);
+        const result = await uploadDocumentAction(form);
+        if (!result.ok) {
+          setError(result.error ?? `Could not upload ${file.name}.`);
+        }
       }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed. Try again.");
     }
     setUploading((n) => Math.max(0, n - list.length));
     await refresh();
@@ -97,34 +112,48 @@ export default function DocumentsPage() {
   async function handleToggle(doc: UserDocument) {
     const next = !doc.attach_to_applications;
     setBusyIds((prev) => ({ ...prev, [doc.id]: true }));
-    const result = await toggleAttachAction(doc.id, next);
-    setBusyIds((prev) => ({ ...prev, [doc.id]: false }));
-    if (!result.ok) {
-      setError(result.error ?? "Could not update the document.");
-      return;
+    try {
+      const result = await toggleAttachAction(doc.id, next);
+      if (!result.ok) {
+        setError(result.error ?? "Could not update the document.");
+        return;
+      }
+      setDocuments((prev) => prev.map((d) => (d.id === doc.id ? { ...d, attach_to_applications: next } : d)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not update the document.");
+    } finally {
+      setBusyIds((prev) => ({ ...prev, [doc.id]: false }));
     }
-    setDocuments((prev) => prev.map((d) => (d.id === doc.id ? { ...d, attach_to_applications: next } : d)));
   }
 
   async function handleDownload(doc: UserDocument) {
-    const result = await getDocumentDownloadUrlAction(doc.id);
-    if (!result.ok || !result.url) {
-      setError(result.error ?? "Could not create a download link.");
-      return;
+    try {
+      const result = await getDocumentDownloadUrlAction(doc.id);
+      if (!result.ok || !result.url) {
+        setError(result.error ?? "Could not create a download link.");
+        return;
+      }
+      window.open(result.url, "_blank", "noopener");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create a download link.");
     }
-    window.open(result.url, "_blank", "noopener");
   }
 
   async function handleDelete(doc: UserDocument) {
     if (!window.confirm(`Delete "${doc.file_name}"? This cannot be undone.`)) return;
     setBusyIds((prev) => ({ ...prev, [doc.id]: true }));
-    const result = await deleteDocumentAction(doc.id);
-    setBusyIds((prev) => ({ ...prev, [doc.id]: false }));
-    if (!result.ok) {
-      setError(result.error ?? "Could not delete the document.");
-      return;
+    try {
+      const result = await deleteDocumentAction(doc.id);
+      if (!result.ok) {
+        setError(result.error ?? "Could not delete the document.");
+        return;
+      }
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete the document.");
+    } finally {
+      setBusyIds((prev) => ({ ...prev, [doc.id]: false }));
     }
-    setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
   }
 
   return (

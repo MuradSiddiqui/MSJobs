@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader, EmptyState } from "@/components/shared/states";
 import { JobCard } from "@/components/jobs/job-card";
 import { JobFilters } from "@/components/jobs/filter-panel";
+import { Button } from "@/components/ui/button";
 import { companyName, asArray } from "@/lib/relations";
 import { ensureScoresForJobs } from "@/server/ensure-matches";
 import { sourceLabel, isoDaysAgo } from "@/lib/utils";
@@ -43,6 +44,38 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims?.sub as string;
+
+  // Jobs are matched against the CV: no CV, no job list. The user uploads
+  // once on /cv and personalized scores appear here.
+  const { data: activeResume } = await supabase
+    .from("resumes")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!activeResume) {
+    return (
+      <div>
+        <PageHeader
+          title="Jobs"
+          description="German tech roles scored against your CV — filter by type, freshness, and match."
+        />
+        <div className="rounded-xl border border-dashed border-border/80 bg-card/40 px-6 py-14 text-center">
+          <p className="font-display text-base font-medium tracking-tight">
+            Upload your CV first
+          </p>
+          <p className="mx-auto mt-1.5 max-w-md text-sm text-muted-foreground">
+            Every job here is scored against your CV. Upload it once and your
+            personalized match percentages will appear.
+          </p>
+          <Button asChild className="mt-4">
+            <Link href="/cv">Upload CV</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const { data: ignored } = await supabase.from("ignored_jobs").select("job_id").eq("user_id", userId);
   const ignoredIds = setOf((ignored ?? []).map((r) => r.job_id));

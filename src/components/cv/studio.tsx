@@ -6,6 +6,7 @@ import { CvDocument } from "./cv-document";
 import { VersionsCard } from "./versions-card";
 import { OriginalFile } from "./original-file";
 import { DownloadCvButton } from "./download-button";
+import { retryResumeParseAction } from "@/server/cv";
 import { cn } from "@/lib/utils";
 
 export type CvVersion = {
@@ -21,6 +22,36 @@ export type CvVersion = {
 };
 
 type Tab = "preview" | "original";
+
+function RetryParseButton({ versionId }: { versionId: string }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function retry() {
+    setBusy(true);
+    setError(null);
+    try {
+      await retryResumeParseAction(versionId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Retry failed. Try again.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-3">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => void retry()}
+        className="rounded-lg bg-danger px-4 py-2 text-[13px] font-medium text-white transition-opacity disabled:opacity-60"
+      >
+        {busy ? "Retrying..." : "Try parsing again"}
+      </button>
+      {error ? <p className="mt-2 text-[13px]">{error}</p> : null}
+    </div>
+  );
+}
 
 export function CvStudio({ versions }: { versions: CvVersion[] }) {
   const [selectedId, setSelectedId] = useState<string | undefined>(versions[0]?.id);
@@ -80,6 +111,7 @@ export function CvStudio({ versions }: { versions: CvVersion[] }) {
               <p className="mt-2 text-[13px]">
                 Upload the file again, or try a PDF or DOCX instead.
               </p>
+              <RetryParseButton versionId={selected.id} />
             </div>
           ) : (
             <div

@@ -78,6 +78,26 @@ export async function ensureScoresForJobs(
     .maybeSingle();
   if (!pref) return;
 
+  // The CV text feeds the semantic part of the match score.
+  let experienceText = "";
+  const { data: resume } = await supabase
+    .from("resumes")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (resume) {
+    const { data: version } = await supabase
+      .from("resume_versions")
+      .select("extracted_text")
+      .eq("resume_id", resume.id)
+      .eq("parse_status", "succeeded")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    experienceText = version?.extracted_text ?? "";
+  }
+
   const { data: jobs } = await supabase.from("jobs").select("*").in("id", missing);
   if (!jobs?.length) return;
 
@@ -110,7 +130,7 @@ export async function ensureScoresForJobs(
     preferredKeywords: pref.preferred_keywords,
     headline: profile.headline,
     summary: null,
-    experienceText: "",
+    experienceText,
   };
   const weights = asWeights(pref.scoring_weights);
 

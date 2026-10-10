@@ -236,3 +236,54 @@ export async function getResumeFileUrl(
 
   return { ok: true, url: signed.signedUrl, fileName: version.file_name };
 }
+
+/**
+ * Re-runs text extraction + AI parsing for a resume version that failed,
+ * using the original file already in storage. No re-upload needed.
+ */
+export async function retryResumeParseAction(versionId: string): Promise<void> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub as string | undefined;
+  if (!userId) redirect("/login");
+
+  const { data: version } = await supabase
+    .from("resume_versions")
+    .select("id, storage_path, mime_type, file_name, byte_size")
+    .eq("id", versionId)
+    .eq("user_id", userId)
+    .single();
+  if (!version) throw new Error("CV version not found.");
+
+  const { data: file, error: downloadError } = await supabase.storage
+    .from("resumes")
+    .download(version.storage_path);
+  if (downloadError || !file) {
+    throw new Error("Could not download the original file. Try uploading again.");
+  }
+
+  await supabase
+    .from("resume_versions")
+    .update({ parse_status: "processing", parse_error: null })
+    .eq("id", version.id);
+
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const text = await extractResumeText(buffer, version.mime_type);
+    if (!text || text.length < 20) {
+      throw new Error("No readable text found in the file. A scanned image or empty file cannot be parsed.");
+    }
+    const parsed = await parseResume(text, userId);
+    await supabase
+      .from("resume_versions")
+      .update({ extracted_text: text, parsed, parse_status: "succeeded", parse_error: null })
+      .eq("id", version.id);
+  } catch (error) {
+    await supabase
+      .from("resume_versions")
+      .update({ parse_status: "failed", parse_error: String(error) })
+      .eq("id", version.id);
+  }
+
+  revalidatePath("/cv");
+}

@@ -19,7 +19,7 @@ const NAV = [
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/applications", label: "Applications", icon: Kanban },
   { href: "/cv", label: "CV", icon: FileText },
-  { href: "/documents", label: "Documents", icon: FolderOpen },
+  { href: "/documents", label: "Documents", icon: FolderOpen, disabled: true },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -83,6 +83,22 @@ export function AppShell({
     <nav className="flex flex-col gap-0.5">
       {NAV.map((item) => {
         const Icon = item.icon;
+        if (item.disabled) {
+          return (
+            <span
+              key={item.href}
+              aria-disabled="true"
+              title="Coming soon"
+              className="flex cursor-not-allowed items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground/50"
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              {item.label}
+              <span className="ml-auto rounded-full border border-border/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                Soon
+              </span>
+            </span>
+          );
+        }
         const active = path === item.href || path.startsWith(`${item.href}/`);
         return (
           <Link

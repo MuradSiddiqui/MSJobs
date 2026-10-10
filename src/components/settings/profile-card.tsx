@@ -28,17 +28,28 @@ export function ProfileCard({ fullName, email, avatarUrl }: ProfileCardProps) {
     if (!file || busy) return;
     setBusy(true);
     setError(null);
-    setPreview(URL.createObjectURL(file));
-    const form = new FormData();
-    form.append("file", file);
-    const result = await uploadAvatarAction(form);
-    setBusy(false);
-    if (!result.ok) {
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const result = await uploadAvatarAction(form);
+      if (!result.ok) {
+        URL.revokeObjectURL(objectUrl);
+        setPreview(null);
+        setError(result.error);
+        return;
+      }
+      // Show the confirmed URL immediately instead of waiting on refresh.
+      setPreview(result.avatarUrl);
+      router.refresh();
+    } catch (e) {
+      URL.revokeObjectURL(objectUrl);
       setPreview(null);
-      setError(result.error);
-      return;
+      setError(e instanceof Error ? e.message : "Upload failed. Try again.");
+    } finally {
+      setBusy(false);
     }
-    router.refresh();
   }
 
   return (
