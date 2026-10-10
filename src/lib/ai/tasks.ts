@@ -99,6 +99,12 @@ export async function parseResume(text: string, userId: string): Promise<ResumeP
       // The resume schema is large; the default token budget truncates the
       // JSON before required trailing fields are emitted.
       maxOutputTokens: 16000,
+      // gpt-oss is a reasoning model: its chain-of-thought tokens count
+      // against max_completion_tokens. For pure extraction reasoning is
+      // overhead, so keep it low and leave the budget for the JSON output.
+      providerOptions: {
+        groq: { reasoningEffort: "low" },
+      },
       output: Output.object({ schema: ResumeParseSchema }),
       system: `Extract a structured resume. ${TRUTHFULNESS_RULES} Never invent missing fields; use null or empty arrays.
 Include contact fields when present (email, phone, linkedin, website, github).
