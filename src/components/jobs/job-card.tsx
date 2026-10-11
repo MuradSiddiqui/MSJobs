@@ -40,6 +40,23 @@ export function FreshnessBadge({
   estimated: boolean;
 }) {
   if (!postedAt) return <span className="text-xs text-muted-foreground">Date unknown</span>;
+  const ageMs = Date.now() - new Date(postedAt).getTime();
+  const ageHours = ageMs / (1000 * 60 * 60);
+  // Urgency badges inspired by high-volume apply strategy: fresh jobs first.
+  if (ageHours < 4) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger">
+        HOT · {relativeTime(postedAt)}
+      </span>
+    );
+  }
+  if (ageHours < 24) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+        NEW · {relativeTime(postedAt)}
+      </span>
+    );
+  }
   return (
     <span className="text-xs text-muted-foreground">
       {estimated ? "Discovered" : "Posted"} {relativeTime(postedAt)}

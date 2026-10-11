@@ -21,6 +21,7 @@ export default async function DashboardPage() {
     { count: strong },
     { count: saved },
     { count: applied },
+    { count: appliedWeek },
     { count: interviews },
     { data: top },
     { data: fresh },
@@ -48,6 +49,12 @@ export default async function DashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("status", "applied"),
+    supabase
+      .from("applications")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "applied")
+      .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
     supabase
       .from("applications")
       .select("*", { count: "exact", head: true })
@@ -90,7 +97,7 @@ export default async function DashboardPage() {
     { label: "New jobs (24h)", value: newJobs ?? 0, Icon: Sparkles, trend: `${newJobsWeek ?? 0} in the last 7 days` },
     { label: "Strong matches", value: strong ?? 0, Icon: Target, trend: "80% score or higher" },
     { label: "Saved", value: saved ?? 0, Icon: Bookmark, trend: null },
-    { label: "Applied", value: applied ?? 0, Icon: Send, trend: null },
+    { label: "Applied", value: applied ?? 0, Icon: Send, trend: `${appliedWeek ?? 0} this week - volume wins` },
     { label: "Interviews", value: interviews ?? 0, Icon: Users, trend: null },
   ] as const;
 
