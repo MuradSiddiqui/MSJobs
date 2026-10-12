@@ -54,7 +54,7 @@ export default async function DashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("status", "applied")
-      .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+      .gte("created_at", weekAgo),
     supabase
       .from("applications")
       .select("*", { count: "exact", head: true })
