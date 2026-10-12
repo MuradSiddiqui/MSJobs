@@ -40,6 +40,7 @@ export function FreshnessBadge({
   estimated: boolean;
 }) {
   if (!postedAt) return <span className="text-xs text-muted-foreground">Date unknown</span>;
+  // eslint-disable-next-line react-hooks/purity -- freshness is display-only, computed once per render
   const ageMs = Date.now() - new Date(postedAt).getTime();
   const ageHours = ageMs / (1000 * 60 * 60);
   // Urgency badges inspired by high-volume apply strategy: fresh jobs first.
