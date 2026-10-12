@@ -389,3 +389,90 @@ export async function getCvVariantSignedUrl(
   if (error || !signed?.signedUrl) return { ok: false, error: error?.message ?? "Could not sign URL." };
   return { ok: true, url: signed.signedUrl, fileName: content.fileName ?? "tailored-cv.pdf" };
 }
+
+export type ApplyQueueItem = {
+  jobId: string;
+  title: string;
+  company: string;
+  city: string | null;
+  remoteType: string | null;
+  applyUrl: string;
+  matchScore: number | null;
+  postedAt: string | null;
+};
+
+export type BuildQueueInput = {
+  minScore: number;
+  freshOnly: boolean;
+  maxJobs: number;
+};
+
+/** Build an auto-apply queue: high-match, not-yet-applied jobs sorted by freshness then score. */
+export async function buildApplyQueue(
+  input: BuildQueueInput,
+): Promise<{ ok: true; queue: ApplyQueueItem[] } | { ok: false; error: string }> {
+  try {
+    const { supabase, userId } = await uid();
+    const { minScore, freshOnly, maxJobs } = input;
+
+    let query = supabase
+      .from("user_job_matches")
+      .select(
+        "overall_score, jobs!inner(id, title, city, remote_type, apply_url, effective_posted_at, companies(name))",
+      )
+      .eq("user_id", userId)
+      .gte("overall_score", minScore)
+      .order("overall_score", { ascending: false })
+      .limit(Math.min(Math.max(maxJobs, 1), 100));
+
+    if (freshOnly) {
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      query = query.gte("jobs.effective_posted_at", weekAgo);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    // Exclude jobs already applied to or ignored.
+    const jobIds = (data ?? []).map((m) => {
+      const j = m.jobs as unknown as { id: string };
+      return j.id;
+    });
+    const { data: existing } = await supabase
+      .from("applications")
+      .select("job_id")
+      .eq("user_id", userId)
+      .in("job_id", jobIds.length > 0 ? jobIds : ["00000000-0000-0000-0000-000000000000"]);
+    const appliedSet = new Set((existing ?? []).map((a) => a.job_id));
+
+    const queue: ApplyQueueItem[] = [];
+    for (const m of data ?? []) {
+      const job = m.jobs as unknown as {
+        id: string;
+        title: string;
+        city: string | null;
+        remote_type: string | null;
+        apply_url: string;
+        effective_posted_at: string | null;
+        companies: { name: string } | null;
+      };
+      if (appliedSet.has(job.id)) continue;
+      if (!job.apply_url) continue;
+      queue.push({
+        jobId: job.id,
+        title: job.title,
+        company: job.companies?.name ?? "Unknown",
+        city: job.city,
+        remoteType: job.remote_type,
+        applyUrl: job.apply_url,
+        matchScore: m.overall_score,
+        postedAt: job.effective_posted_at,
+      });
+      if (queue.length >= maxJobs) break;
+    }
+
+    return { ok: true, queue };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Could not build queue" };
+  }
+}

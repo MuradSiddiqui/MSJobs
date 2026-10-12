@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader, EmptyState } from "@/components/shared/states";
 import { JobCard } from "@/components/jobs/job-card";
 import { JobFilters } from "@/components/jobs/filter-panel";
+import { AutoApplyButton } from "@/components/jobs/auto-apply-button";
 import { Button } from "@/components/ui/button";
 import { companyName, asArray } from "@/lib/relations";
 import { ensureScoresForJobs } from "@/server/ensure-matches";
@@ -220,6 +221,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
       <PageHeader
         title="Jobs"
         description="German tech roles scored against your CV — filter by type, freshness, and match."
+        actions={<AutoApplyButton />}
       />
       <JobFilters />
       {error ? <p className="mt-2 text-sm text-danger">{error.message}</p> : null}
