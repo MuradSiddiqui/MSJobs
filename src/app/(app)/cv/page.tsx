@@ -28,14 +28,6 @@ export default async function CvPage() {
             Upload once. MS Jobs keeps versions and tailors per job.
           </p>
         </div>
-        <a
-          href="/samples/stelle-cv-sample.pdf"
-          target="_blank"
-          rel="noreferrer"
-          className="mt-1 text-sm font-medium text-accent hover:underline"
-        >
-          View sample
-        </a>
       </div>
 
       <UploadZone />
