@@ -1,6 +1,5 @@
 /**
- * Generates public/samples/stelle-cv-sample.pdf — classic 2-page CV layout
- * matching the Stelle tailored-CV template (same style as Murad-style Google Docs CVs).
+ * Generates public/samples/sample-cv.pdf — classic 2-page CV layout.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -143,7 +142,7 @@ async function main() {
   });
   const dir = resolve(process.cwd(), "public/samples");
   mkdirSync(dir, { recursive: true });
-  const out = resolve(dir, "stelle-cv-sample.pdf");
+  const out = resolve(dir, "sample-cv.pdf");
   writeFileSync(out, pdf);
   console.log(`Wrote ${out} (${pdf.length} bytes)`);
 }
