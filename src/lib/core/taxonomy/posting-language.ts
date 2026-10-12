@@ -5,7 +5,7 @@
 export type PostingLanguage = "en" | "de" | "unknown";
 
 const DE_MARKERS =
-  /\b(und|oder|mit|für|fuer|bei|als|wir|sie|ihr|ihre|unser|unsere|gesucht|bewerben|vollzeit|teilzeit|praktikum|werkstudent|kenntnisse|aufgaben|anforderungen|unternehmen|erfahrung|abschluss|bewerbung)\b|[äöüß]/i;
+  /\b(und|oder|mit|für|fuer|bei|als|wir|sie|ihr|ihre|unser|unsere|gesucht|bewerben|vollzeit|teilzeit|praktikum|werkstudent|kenntnisse|aufgaben|anforderungen|stellenbeschreibung|unternehmen|erfahrung|abschluss|bewerbung)\b|[äöüß]/i;
 
 const EN_MARKERS =
   /\b(and|or|with|for|the|you|your|we|our|are|will|looking|apply|full[- ]time|part[- ]time|internship|requirements|responsibilities|experience|about the role|job description|what you.?ll)\b/i;
