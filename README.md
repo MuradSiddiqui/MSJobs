@@ -2,7 +2,24 @@
 
 Live: https://ms-jobs.vercel.app
 
-A personal job search companion. Upload your CV once, and MS Jobs scores every role against it, keeps your applications organized, and helps you apply to more roles in less time.
+An AI-powered job search companion. Upload your CV once, and MS Jobs scores every role against it, keeps your applications organized, and helps you apply to more roles in less time.
+
+## How it works
+
+**1. CV parsing** — Upload your CV and a Groq LLM (`gpt-oss`) extracts your profile into structured data: skills, experience, desired roles, preferences.
+
+**2. Job ingestion** — A worker continuously pulls fresh postings from public job board APIs, normalizes them, and filters out noise.
+
+**3. Match scoring** — Every job is scored against your profile by a transparent multi-factor engine:
+- Role title relevance
+- Skill overlap
+- Experience-level fit
+- Eligibility gates (location, employment type, exclusions)
+- Semantic similarity
+
+Scores map to clear labels (excellent / strong / good / possible / weak) and recommendations (apply / worth applying / stretch / low priority). No black box — you can see why a role scored the way it did.
+
+**4. Apply faster** — Line up your best matches in the auto-apply queue, filter to fresh roles, and power through applications with keyboard shortcuts.
 
 ## What it does
 
@@ -15,7 +32,7 @@ A personal job search companion. Upload your CV once, and MS Jobs scores every r
 
 ## Tech
 
-Next.js, TypeScript, Supabase, Tailwind CSS. Job data comes from public job board APIs.
+Next.js 15, TypeScript, Supabase (Postgres + Auth + Storage), Tailwind CSS, Groq (`openai/gpt-oss-120b` / `20b`) for CV parsing and AI tasks, Vercel. Job data from public job board APIs via a Railway worker.
 
 ## Getting started
 
